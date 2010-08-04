@@ -91,12 +91,13 @@ struct _audioapi {
 };
 
 
-static void audioapi_void(void) {}
+static void audioapi_void(void) {;}
 
 static t_audioapi*audioapis=NULL;
 static t_audioapi*audioapi=NULL;
 
-static t_audioapi*findapi(t_symbol*s) {
+static t_audioapi*findapi(t_symbol*s) 
+{
   t_audioapi*api=NULL;
   for(api=audioapis; NULL!=api; api=api->next) {
     if(api->a_name==s)
@@ -104,20 +105,19 @@ static t_audioapi*findapi(t_symbol*s) {
   }
   return NULL;
 }
-static t_audioapi*setapi(t_symbol*s) {
+static t_audioapi*setapi(t_symbol*s) 
+{
   t_audioapi*api=findapi(s);
   audioapi=api;
-
-  if(audioapi) {
-    post("set api to %x: %s", audioapi, audioapi->a_name->s_name);
-  }
 
   return audioapi;
 }
 
-static t_audioapi*getapi(t_symbol*s) {
+static t_audioapi*getapi(t_symbol*s) 
+{
   t_audioapi*api=NULL, *last=NULL;
-  for(api=audioapis; NULL!=api; api=api->next) {
+  for(api=audioapis; NULL!=api; api=api->next)
+  {
     if(api->a_name==s)
       return api;
     last=api;
@@ -127,9 +127,12 @@ static t_audioapi*getapi(t_symbol*s) {
   memset(api, 0, sizeof(t_audioapi));
   api->a_name=s;
 
-  if(NULL!=audioapis) {
+  if(NULL!=audioapis) 
+  {
     last->next=api;
-  } else {
+  } 
+  else
+  {
     audioapis=api;
   }
 
@@ -142,7 +145,6 @@ t_audioapi*audioapi_new(t_symbol*name,
                         t_audiofn_send sendfun
                         ) {
   t_audioapi*api=getapi(name);
-  post("new api %x as '%s'", api, name->s_name);
   api->a_init=audioapi_void;
   api->a_open=openfun;
   api->a_close=closefun;
@@ -157,9 +159,9 @@ t_audioapi*audioapi_new_withcallback(t_symbol*name,
                                      t_audiofn_open_wcb openfun, 
                                      t_audiofn_close closefun,
                                      t_audiofn_send sendfun
-                                     ) {
+                                     ) 
+{
   t_audioapi*api=getapi(name);
-  post("new cbapi %x as '%s'", api, name->s_name);
   api->a_init=audioapi_void;
   api->a_callbackopen=openfun;
   api->a_close=closefun;
@@ -182,7 +184,6 @@ void audioapi_addlistdevs(t_audioapi*api, t_method fun)
   if(api)api->a_listdevs=fun;
 }
 
-
 void audioapi_init(void) 
 {
   if(audioapi && audioapi->a_init)audioapi->a_init();
@@ -190,12 +191,15 @@ void audioapi_init(void)
 int audioapi_open(int nindev, int *indev, int nchin, int *chin, int noutdev, int *outdev, int nchout, int *chout, int rate)
 {
   int result=1;
-  if(audioapi) {
-    if(audioapi->a_open){
+  if(audioapi)
+  {
+    if(audioapi->a_open)
+    {
       result=audioapi->a_open(nindev, indev, nchin, chin, noutdev, outdev, nchout, chout, rate);
       return result;
     }
-    if(audioapi->a_callbackopen){
+    if(audioapi->a_callbackopen)
+    {
       int blksize = (sys_blocksize ? sys_blocksize : 64);
 
       result=audioapi->a_callbackopen(nindev, indev, nchin, chin, noutdev, outdev, nchout, chout, rate,
@@ -211,13 +215,16 @@ int audioapi_callbackopen(int nindev, int *indev, int nchin, int *chin, int nout
                                t_audiocallback callback, 
                                t_sample *soundin, t_sample *soundout, int framesperbuf, int nbuffers)
 {
-  if(audioapi) {
-    if(audioapi->a_callbackopen){
+  if(audioapi) 
+  {
+    if(audioapi->a_callbackopen)
+    {
       return audioapi->a_callbackopen(nindev, indev, nchin, chin, noutdev, outdev, nchout, chout, rate,
                                       callback, 
                                       soundin, soundout, framesperbuf, nbuffers);
     }
-    if(audioapi->a_open){
+    if(audioapi->a_open)
+    {
       return audioapi->a_open(nindev, indev, nchin, chin, noutdev, outdev, nchout, chout, rate);
     }
   }
@@ -226,11 +233,13 @@ int audioapi_callbackopen(int nindev, int *indev, int nchin, int *chin, int nout
 }
 void audioapi_close(void) 
 {
-  if(audioapi && audioapi->a_close)audioapi->a_close();
+  if(audioapi && audioapi->a_close)
+    audioapi->a_close();
 }
 int audioapi_senddacs(void) 
 {
-  if(audioapi && audioapi->a_send)return(audioapi->a_send());
+  if(audioapi && audioapi->a_send)
+    return(audioapi->a_send());
   return 0;
 }
 void audioapi_listdevs(void) 
@@ -256,7 +265,10 @@ void audioapi_getdevs(char *indevlist, int *nindevs, char *outdevlist, int *nout
   }
 }
 
-void audioapi_register(void){
+void audioapi_register(void)
+{
+  /* LATER: the functions below should always be available, so we don't need the #ifdefs */
+
 #ifdef USEAPI_OSS
   audioapi_oss();
 #endif
@@ -264,7 +276,6 @@ void audioapi_register(void){
   audioapi_mmio();
 #endif
 #ifdef USEAPI_ALSA
-  post("audioapi register alsa");
   audioapi_alsa();
 #endif
 #ifdef USEAPI_PORTAUDIO
@@ -584,7 +595,8 @@ void sys_reopen_audio( void)
         return;
     }
 
-    if(callback) {
+    if(callback) 
+    {
       int blksize = (sys_blocksize ? sys_blocksize : 64);
       outcome=audioapi_callbackopen(naudioindev,  audioindev,  naudioindev,  chindev,
                                     naudiooutdev, audiooutdev, naudiooutdev, choutdev, 
@@ -593,7 +605,9 @@ void sys_reopen_audio( void)
                                     sys_soundin, sys_soundout, 
                                     blksize, sys_advance_samples/blksize
                                     );
-    } else {
+    }
+    else
+    {
       outcome=audioapi_open(naudioindev,  audioindev,  naudioindev,  chindev,
                             naudiooutdev, audiooutdev, naudiooutdev, choutdev, 
                             rate);
@@ -608,7 +622,6 @@ void sys_reopen_audio( void)
     }
     else
     {
-      post("yey!");
                 /* fprintf(stderr, "started w/callback %d\n", callback); */
         audio_state = 1;
         sched_set_using_audio(
