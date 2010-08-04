@@ -9,6 +9,7 @@
 #include <esd.h>
 #include "m_pd.h"
 #include "s_stuff.h"
+#include "s_media.h"
 #include "m_fixed.h"
 
 /* exported variables */
@@ -133,3 +134,16 @@ void esd_getdevs(char *indevlist, int *nindevs,
 }
 
 #endif
+
+
+
+void audioapi_esd(void) {
+#ifdef USEAPI_ESD
+  t_audioapi*api=audioapi_new(gensym("ESD"),
+                              esd_open_audio,
+                              esd_close_audio,
+                              esd_send_dacs);
+  if(NULL==api)return;
+  audioapi_addgetdevs(api, esd_getdevs);
+#endif /* ESD */
+}
