@@ -73,6 +73,166 @@ static int audio_nextinchans, audio_nextoutchans;
 void sched_audio_callbackfn(void);
 void sched_reopenmeplease(void);
 
+
+
+/* generic audio api handling */
+#include "s_media.h"
+struct _audioapi {
+  t_symbol*a_name;
+  t_method a_init;
+  t_audiofn_open a_open;
+  t_audiofn_open_wcb a_callbackopen;
+  t_audiofn_close a_close;
+  t_audiofn_send a_send;
+  t_audiofn_getdevs a_getdevs;
+  t_method a_listdevs;
+
+  struct _audioapi*next;
+};
+
+
+static void audioapi_void(void) {}
+
+static t_audioapi*audioapis=NULL;
+static t_audioapi*audioapi=NULL;
+
+static t_audioapi*findapi(t_symbol*s) {
+  t_audioapi*api=NULL;
+  for(api=audioapis; NULL!=api; api=api->next) {
+    if(api->a_name==s)
+      return api;
+  }
+  return NULL;
+}
+
+static t_audioapi*getapi(t_symbol*s) {
+  t_audioapi*api=NULL, *last=NULL;
+  for(api=audioapis; NULL!=api; api=api->next) {
+    if(api->a_name==s)
+      return api;
+    last=api;
+  }
+  
+  api=(t_audioapi*)getbytes(sizeof(t_audioapi));
+  memset(api, 0, sizeof(t_audioapi));
+  api->a_name=s;
+
+  if(NULL!=audioapis) {
+    last->next=api;
+  } else {
+    audioapis=api;
+  }
+
+  return api;
+}
+
+t_audioapi*audioapi_new(t_symbol*name,
+                        t_audiofn_open openfun, 
+                        t_audiofn_close closefun,
+                        t_audiofn_send sendfun
+                        ) {
+  t_audioapi*api=getapi(name);
+  post("new api %x as '%s'", api, name->s_name);
+  api->a_init=audioapi_void;
+  api->a_open=openfun;
+  api->a_close=closefun;
+  api->a_send=sendfun;
+  api->a_listdevs=audioapi_void;
+
+  return api;
+}
+
+
+t_audioapi*audioapi_new_withcallback(t_symbol*name,
+                                     t_audiofn_open_wcb openfun, 
+                                     t_audiofn_close closefun,
+                                     t_audiofn_send sendfun
+                                     ) {
+  t_audioapi*api=getapi(name);
+  post("new cbapi %x as '%s'", api, name->s_name);
+  api->a_init=audioapi_void;
+  api->a_callbackopen=openfun;
+  api->a_close=closefun;
+  api->a_send=sendfun;
+  api->a_listdevs=audioapi_void;
+
+  return api;
+}
+
+void audioapi_addinit(t_audioapi*api, t_method fun) 
+{
+  if(api)api->a_init=fun;
+}
+void audioapi_addgetdevs(t_audioapi*api, t_audiofn_getdevs fun)
+{
+  if(api)api->a_getdevs=fun;
+}
+void audioapi_addlistdevs(t_audioapi*api, t_method fun)
+{
+  if(api)api->a_listdevs=fun;
+}
+
+
+void audioapi_init(void) 
+{
+  if(audioapi && audioapi->a_init)audioapi->a_init();
+}
+int audioapi_open(int nindev, int *indev, int nchin, int *chin, int noutdev, int *outdev, int nchout, int *chout, int rate)
+{
+  if(audioapi && audioapi->a_open){
+    return audioapi->a_open(nindev, indev, nchin, chin, noutdev, outdev, nchout, chout, rate);
+  }
+  return 0;
+}
+int audioapi_callbackopen(int nindev, int *indev, int nchin, int *chin, int noutdev, int *outdev, int nchout, int *chout, int rate, 
+                               t_audiocallback callback, 
+                               t_sample *soundin, t_sample *soundout, int framesperbuf, int nbuffers)
+{
+  if(audioapi && audioapi->a_callbackopen){
+    return audioapi->a_callbackopen(nindev, indev, nchin, chin, noutdev, outdev, nchout, chout, rate,
+                                    callback, 
+                                    soundin, soundout, framesperbuf, nbuffers);
+  }
+  return 0;
+}
+void audioapi_close(void) 
+{
+  if(audioapi && audioapi->a_close)audioapi->a_close();
+}
+int audioapi_senddacs(void) 
+{
+  if(audioapi && audioapi->a_send)return(audioapi->a_send());
+  return 0;
+}
+void audioapi_listdevs(void) 
+{
+  if(audioapi && audioapi->a_listdevs)audioapi->a_listdevs();
+}
+void audioapi_getdevs(char *indevlist, int *nindevs, char *outdevlist, int *noutdevs, int *canmulti, int*cancallback, int maxndev, int devdescsize) 
+{
+  int i;
+  *nindevs = *noutdevs = 3;
+  for (i = 0; i < 3; i++)
+    {
+      sprintf(indevlist + i * devdescsize, "input device #%d", i+1);
+      sprintf(outdevlist + i * devdescsize, "output device #%d", i+1);
+    }
+  *canmulti = 0;
+  *cancallback = 0;
+  
+  if(audioapi) {
+    if(audioapi->a_getdevs)
+      audioapi->a_getdevs(indevlist, nindevs, outdevlist, noutdevs, canmulti, maxndev, devdescsize);
+    *cancallback=(NULL!=audioapi->a_callbackopen);
+  }
+}
+
+void audioapi_register(void){
+  audioapi_jack();
+}
+
+/* generic audio api handling */
+
 static int audio_isopen(void)
 {
     return (audio_state &&
@@ -132,6 +292,10 @@ static void audio_init( void)
     if (initted)
         return;
     initted = 1;
+
+    audioapi_init();
+
+
 #ifdef USEAPI_OSS
     oss_init();
 #endif
@@ -342,47 +506,9 @@ void sys_close_audio(void)
     }
     if (!audio_isopen())
         return;
-#ifdef USEAPI_PORTAUDIO
-    if (sys_audioapiopened == API_PORTAUDIO)
-        pa_close_audio();
-    else 
-#endif
-#ifdef USEAPI_JACK
-    if (sys_audioapiopened == API_JACK)
-        jack_close_audio();
-    else
-#endif
-#ifdef USEAPI_OSS
-    if (sys_audioapiopened == API_OSS)
-        oss_close_audio();
-    else
-#endif
-#ifdef USEAPI_ALSA
-    if (sys_audioapiopened == API_ALSA)
-        alsa_close_audio();
-    else
-#endif
-#ifdef USEAPI_MMIO
-    if (sys_audioapiopened == API_MMIO)
-        mmio_close_audio();
-    else
-#endif
-#ifdef USEAPI_AUDIOUNIT
-    if (sys_audioapiopened == API_AUDIOUNIT)
-        audiounit_close_audio();
-    else
-#endif
-#ifdef USEAPI_ESD
-    if (sys_audioapiopened == API_ESD)
-        esd_close_audio();
-    else
-#endif
-#ifdef USEAPI_DUMMY
-    if (sys_audioapiopened == API_DUMMY)
-        dummy_close_audio();
-    else
-#endif
-        post("sys_close_audio: unknown API %d", sys_audioapiopened);
+
+    audioapi_close();
+
     sys_inchannels = sys_outchannels = 0;
     sys_audioapiopened = -1;
     sched_set_using_audio(SCHED_AUDIO_NONE);
@@ -407,72 +533,22 @@ void sys_reopen_audio( void)
         sched_set_using_audio(SCHED_AUDIO_NONE);
         return;
     }
-#ifdef USEAPI_PORTAUDIO
-    if (sys_audioapi == API_PORTAUDIO)
-    {
-        int blksize = (audio_blocksize ? audio_blocksize : 64);
-        if (sys_verbose)
-            fprintf(stderr, "blksize %d, advance %d\n", blksize, sys_advance_samples/blksize);
-        outcome = pa_open_audio((naudioindev > 0 ? chindev[0] : 0),
-        (naudiooutdev > 0 ? choutdev[0] : 0), rate, sys_soundin,
-            sys_soundout, blksize, sys_advance_samples/blksize, 
-             (naudioindev > 0 ? audioindev[0] : 0),
-              (naudiooutdev > 0 ? audiooutdev[0] : 0),
-               (callback ? sched_audio_callbackfn : 0));
-    }
-    else
-#endif
-#ifdef USEAPI_JACK
-    if (sys_audioapi == API_JACK) 
-        outcome = jack_open_audio((naudioindev > 0 ? chindev[0] : 0),
-            (naudioindev > 0 ? choutdev[0] : 0), rate,
-                (callback ? sched_audio_callbackfn : 0));
 
-    else
-#endif    
-#ifdef USEAPI_OSS
-    if (sys_audioapi == API_OSS)
-        outcome = oss_open_audio(naudioindev, audioindev, naudioindev,
-            chindev, naudiooutdev, audiooutdev, naudiooutdev, choutdev, rate,
-                audio_blocksize);
-    else
-#endif
-#ifdef USEAPI_ALSA
-        /* for alsa, only one device is supported; it may
-        be open for both input and output. */
-    if (sys_audioapi == API_ALSA)
-        outcome = alsa_open_audio(naudioindev, audioindev, naudioindev,
-            chindev, naudiooutdev, audiooutdev, naudiooutdev, choutdev, rate,
-                audio_blocksize);
-    else 
-#endif
-#ifdef USEAPI_MMIO
-    if (sys_audioapi == API_MMIO)
-        outcome = mmio_open_audio(naudioindev, audioindev, naudioindev,
-            chindev, naudiooutdev, audiooutdev, naudiooutdev, choutdev, rate,
-                audio_blocksize);
-    else
-#endif
-#ifdef USEAPI_AUDIOUNIT
-    if (sys_audioapi == API_AUDIOUNIT)
-        outcome = audiounit_open_audio((naudioindev > 0 ? chindev[0] : 0),
-            (naudioindev > 0 ? choutdev[0] : 0), rate);
-    else
-#endif
-#ifdef USEAPI_ESD
-    if (sys_audioapi == API_ALSA)
-        outcome = esd_open_audio(naudioindev, audioindev, naudioindev,
-            chindev, naudiooutdev, audiooutdev, naudiooutdev, choutdev, rate);
-    else 
-#endif
-#ifdef USEAPI_DUMMY
-    if (sys_audioapi == API_DUMMY)
-        outcome = dummy_open_audio(naudioindev, naudiooutdev, rate);
-    else
-#endif
-    if (sys_audioapi == API_NONE)
-        ;
-    else post("unknown audio API specified");
+    if(callback) {
+      int blksize = (sys_blocksize ? sys_blocksize : 64);
+      outcome=audioapi_callbackopen(naudioindev,  audioindev,  naudioindev,  chindev,
+                                    naudiooutdev, audiooutdev, naudiooutdev, choutdev, 
+                                    rate,
+                                    sched_audio_callbackfn,
+                                    sys_soundin, sys_soundout, 
+                                    blksize, sys_advance_samples/blksize
+                                    );
+    } else {
+      outcome=audioapi_open(naudioindev,  audioindev,  naudioindev,  chindev,
+                    naudiooutdev, audiooutdev, naudiooutdev, choutdev, 
+                    rate);
+    }
+
     if (outcome)    /* failed */
     {
         audio_state = 0;
@@ -516,47 +592,7 @@ int sys_send_dacs(void)
         sys_outmax = maxsamp;
     }
 
-#ifdef USEAPI_PORTAUDIO
-    if (sys_audioapi == API_PORTAUDIO)
-        return (pa_send_dacs());
-    else 
-#endif
-#ifdef USEAPI_JACK
-      if (sys_audioapi == API_JACK) 
-        return (jack_send_dacs());
-    else
-#endif
-#ifdef USEAPI_OSS
-    if (sys_audioapi == API_OSS)
-        return (oss_send_dacs());
-    else
-#endif
-#ifdef USEAPI_ALSA
-    if (sys_audioapi == API_ALSA)
-        return (alsa_send_dacs());
-    else
-#endif
-#ifdef USEAPI_MMIO
-    if (sys_audioapi == API_MMIO)
-        return (mmio_send_dacs());
-    else
-#endif
-#ifdef USEAPI_AUDIOUNIT
-    if (sys_audioapi == API_AUDIOUNIT)
-        return (audiounit_send_dacs());
-    else
-#endif
-#ifdef USEAPI_ESD
-    if (sys_audioapi == API_ESD)
-        return (esd_send_dacs());
-    else
-#endif
-#ifdef USEAPI_DUMMY
-    if (sys_audioapi == API_DUMMY)
-        return (dummy_send_dacs());
-    else
-#endif
-    post("unknown API");    
+    audioapi_senddacs();
     return (0);
 }
 
@@ -597,82 +633,7 @@ static void audio_getdevs(char *indevlist, int *nindevs,
         int maxndev, int devdescsize)
 {
     audio_init();
-    *cancallback = 0;   /* may be overridden by specific API implementation */
-#ifdef USEAPI_PORTAUDIO
-    if (sys_audioapi == API_PORTAUDIO)
-    {
-        pa_getdevs(indevlist, nindevs, outdevlist, noutdevs, canmulti,
-            maxndev, devdescsize);
-        *cancallback = 1;
-    }
-    else
-#endif
-#ifdef USEAPI_JACK
-    if (sys_audioapi == API_JACK)
-    {
-        jack_getdevs(indevlist, nindevs, outdevlist, noutdevs, canmulti,
-            maxndev, devdescsize);
-        *cancallback = 1;
-    }
-    else
-#endif
-#ifdef USEAPI_OSS
-    if (sys_audioapi == API_OSS)
-    {
-        oss_getdevs(indevlist, nindevs, outdevlist, noutdevs, canmulti,
-            maxndev, devdescsize);
-    }
-    else
-#endif
-#ifdef USEAPI_ALSA
-    if (sys_audioapi == API_ALSA)
-    {
-        alsa_getdevs(indevlist, nindevs, outdevlist, noutdevs, canmulti,
-            maxndev, devdescsize);
-    }
-    else
-#endif
-#ifdef USEAPI_MMIO
-    if (sys_audioapi == API_MMIO)
-    {
-        mmio_getdevs(indevlist, nindevs, outdevlist, noutdevs, canmulti,
-            maxndev, devdescsize);
-    }
-    else
-#endif
-#ifdef USEAPI_AUDIOUNIT
-    if (sys_audioapi == API_AUDIOUNIT)
-    {
-    }
-    else
-#endif
-#ifdef USEAPI_ESD
-    if (sys_audioapi == API_ESD)
-    {
-        esd_getdevs(indevlist, nindevs, outdevlist, noutdevs, canmulti,
-            maxndev, devdescsize);
-    }
-    else
-#endif
-#ifdef USEAPI_DUMMY
-    if (sys_audioapi == API_DUMMY)
-    {
-        dummy_getdevs(indevlist, nindevs, outdevlist, noutdevs, canmulti,
-            maxndev, devdescsize);
-    }
-    else
-#endif
-    {
-            /* this shouldn't happen once all the above get filled in. */
-        int i;
-        *nindevs = *noutdevs = 3;
-        for (i = 0; i < 3; i++)
-        {
-            sprintf(indevlist + i * devdescsize, "input device #%d", i+1);
-            sprintf(outdevlist + i * devdescsize, "output device #%d", i+1);
-        }
-        *canmulti = 0;
-    }
+    audioapi_getdevs(indevlist, nindevs, outdevlist, noutdevs, canmulti, cancallback, maxndev, devdescsize);
 }
 
 
@@ -853,49 +814,8 @@ void sys_set_audio_settings_reopen(int naudioindev, int *audioindev, int nchinde
 
 void sys_listdevs(void )
 {
-#ifdef USEAPI_PORTAUDIO
-    if (sys_audioapi == API_PORTAUDIO)
-        sys_listaudiodevs();
-    else 
-#endif
-#ifdef USEAPI_JACK
-    if (sys_audioapi == API_JACK)
-        jack_listdevs();
-    else
-#endif
-#ifdef USEAPI_OSS
-    if (sys_audioapi == API_OSS)
-        sys_listaudiodevs();
-    else
-#endif
-#ifdef USEAPI_ALSA
-    if (sys_audioapi == API_ALSA)
-        sys_listaudiodevs();
-    else
-#endif
-#ifdef USEAPI_MMIO
-    if (sys_audioapi == API_MMIO)
-        sys_listaudiodevs();
-    else
-#endif
-#ifdef USEAPI_AUDIOUNIT
-    if (sys_audioapi == API_AUDIOUNIT)
-        sys_listaudiodevs();
-    else
-#endif
-#ifdef USEAPI_ESD
-    if (sys_audioapi == API_ESD)
-        sys_listaudiodevs();
-    else
-#endif
-#ifdef USEAPI_DUMMY
-    if (sys_audioapi == API_DUMMY)
-        sys_listaudiodevs();
-    else
-#endif
-    post("unknown API");    
-
-    sys_listmididevs();
+  audioapi_listdevs();
+  sys_listmididevs();
 }
 
 void sys_get_audio_devs(char *indevlist, int *nindevs,
@@ -961,42 +881,40 @@ void sys_set_audio_state(int onoff)
 void sys_get_audio_apis(char *buf)
 {
     int n = 0;
+
+    audioapi_register();
+
+    /* LATER get rid of the API_??? enumeration and only use symbolic names for api selection
+     * then iterate through all available APIs rather than explicitely naming them here 
+     */
+
     strcpy(buf, "{ ");
-#ifdef USEAPI_OSS
-    sprintf(buf + strlen(buf), "{OSS %d} ", API_OSS); n++;
-#endif
-#ifdef USEAPI_MMIO
-    sprintf(buf + strlen(buf), "{\"standard (MMIO)\" %d} ", API_MMIO); n++;
-#endif
-#ifdef USEAPI_ALSA
-    sprintf(buf + strlen(buf), "{ALSA %d} ", API_ALSA); n++;
-#endif
-#ifdef USEAPI_PORTAUDIO
+    if(NULL!=findapi(gensym("OSS")))
+      sprintf(buf + strlen(buf), "{OSS %d} ", API_OSS); n++;
+    if(NULL!=findapi(gensym("MMIO")))
+      sprintf(buf + strlen(buf), "{\"standard (MMIO)\" %d} ", API_MMIO); n++;
+    if(NULL!=findapi(gensym("ALSA")))
+      sprintf(buf + strlen(buf), "{ALSA %d} ", API_ALSA); n++;
+    if(NULL!=findapi(gensym("portaudio")))
+      {
 #ifdef _WIN32
-    sprintf(buf + strlen(buf),
-        "{\"ASIO (via portaudio)\" %d} ", API_PORTAUDIO);
+        sprintf(buf + strlen(buf),
+                "{\"ASIO (via portaudio)\" %d} ", API_PORTAUDIO);
+#elif defined OSX
+        sprintf(buf + strlen(buf),
+                "{\"standard (portaudio)\" %d} ", API_PORTAUDIO);
 #else
-#ifdef OSX
-    sprintf(buf + strlen(buf),
-        "{\"standard (portaudio)\" %d} ", API_PORTAUDIO);
-#else
-    sprintf(buf + strlen(buf), "{portaudio %d} ", API_PORTAUDIO);
+        sprintf(buf + strlen(buf), "{portaudio %d} ", API_PORTAUDIO);
 #endif
-#endif
-     n++;
-#endif
-#ifdef USEAPI_JACK
-    sprintf(buf + strlen(buf), "{jack %d} ", API_JACK); n++;
-#endif
-#ifdef USEAPI_AUDIOUNIT
-    sprintf(buf + strlen(buf), "{AudioUnit %d} ", API_AUDIOUNIT); n++;
-#endif
-#ifdef USEAPI_ESD
-    sprintf(buf + strlen(buf), "{ESD %d} ", API_ESD); n++;
-#endif
-#ifdef USEAPI_DUMMY
-    sprintf(buf + strlen(buf), "{dummy %d} ", API_DUMMY); n++;
-#endif
+        n++;
+      }
+    if(NULL!=findapi(gensym("jack")))
+      sprintf(buf + strlen(buf), "{jack %d} ", API_JACK); n++;
+    if(NULL!=findapi(gensym("AudioUnit")))
+      sprintf(buf + strlen(buf), "{AudioUnit %d} ", API_AUDIOUNIT); n++;
+    if(NULL!=findapi(gensym("ESD")))
+      sprintf(buf + strlen(buf), "{ESD %d} ", API_ESD); n++;
+
     strcat(buf, "}");
         /* then again, if only one API (or none) we don't offer any choice. */
     if (n < 2)
