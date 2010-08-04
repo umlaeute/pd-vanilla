@@ -900,6 +900,7 @@ void sys_get_audio_devs(char *indevlist, int *nindevs,
 
 void sys_set_audio_api(int which)
 {
+  audioapi_register();
   t_audioapi*api=NULL;
      switch(which) {
      case API_ALSA: 

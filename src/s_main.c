@@ -524,6 +524,9 @@ int sys_argparse(int argc, char **argv)
 {
     char sbuf[MAXPDSTRING];
     int i;
+    int audioapi=sys_audioapi;
+    int midiapi =API_DEFAULT;
+
     while ((argc > 0) && **argv == '-')
     {
         if (!strcmp(*argv, "-r") && argc > 1 &&
@@ -605,14 +608,14 @@ int sys_argparse(int argc, char **argv)
 #ifdef USEAPI_OSS
         else if (!strcmp(*argv, "-oss"))
         {
-            sys_set_audio_api(API_OSS);
+            audioapi=API_OSS;
             argc--; argv++;
         }
 #endif
 #ifdef USEAPI_ALSA
         else if (!strcmp(*argv, "-alsa"))
         {
-            sys_set_audio_api(API_ALSA);
+            audioapi=API_ALSA;
             argc--; argv++;
         }
         else if (!strcmp(*argv, "-alsaadd") && (argc > 1))
@@ -624,14 +627,14 @@ int sys_argparse(int argc, char **argv)
         }
         else if (!strcmp(*argv, "-alsamidi"))
         {
-          sys_set_midi_api(API_ALSA);
+            midiapi=API_ALSA;
             argc--; argv++;
         }
 #endif
 #ifdef USEAPI_JACK
         else if (!strcmp(*argv, "-jack"))
         {
-            sys_set_audio_api(API_JACK);
+            audioapi=API_JACK;
             argc--; argv++;
         }
 #endif
@@ -642,7 +645,7 @@ int sys_argparse(int argc, char **argv)
 #endif
             )
         {
-            sys_set_audio_api(API_PORTAUDIO);
+            audioapi=API_PORTAUDIO;
             sys_mmio = 0;
             argc--; argv++;
         }
@@ -650,7 +653,7 @@ int sys_argparse(int argc, char **argv)
 #ifdef USEAPI_MMIO
         else if (!strcmp(*argv, "-mmio"))
         {
-            sys_set_audio_api(API_MMIO);
+            audioapi=API_MMIO;
             sys_mmio = 1;
             argc--; argv++;
         }
@@ -658,14 +661,14 @@ int sys_argparse(int argc, char **argv)
 #ifdef USEAPI_AUDIOUNIT
         else if (!strcmp(*argv, "-audiounit"))
         {
-            sys_set_audio_api(API_AUDIOUNIT);
+            audioapi=API_AUDIOUNIT;
             argc--; argv++;
         }
 #endif
 #ifdef USEAPI_ESD
         else if (!strcmp(*argv, "-esd"))
         {
-            sys_set_audio_api(API_ESD);
+            audioapi=API_ESD;
             argc--; argv++;
         }
 #endif
@@ -903,6 +906,8 @@ int sys_argparse(int argc, char **argv)
     for (; argc > 0; argc--, argv++) 
         sys_openlist = namelist_append_files(sys_openlist, *argv);
 
+    sys_set_audio_api(audioapi);
+    sys_set_midi_api (midiapi);
 
     return (0);
 }
