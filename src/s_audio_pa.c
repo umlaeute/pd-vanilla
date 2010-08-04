@@ -16,6 +16,7 @@
 
 #include "m_pd.h"
 #include "s_stuff.h"
+#include "s_media.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -584,4 +585,33 @@ void pa_getdevs(char *indevlist, int *nindevs,
     }
     *nindevs = nin;
     *noutdevs = nout;
+}
+
+int pa_open_audio_wcb(int nindev,  int *indev,  int nchin,  int *chin, 
+                    int noutdev, int *outdev, int nchout, int *chout, 
+                    int rate,
+                    t_audiocallback callback, 
+                    t_sample *soundin, t_sample *soundout, int framesperbuf, int nbuffers)
+{
+  int inchans= (nchin  > 0 ? chin [0] : 0);
+  int outchans=(nchout > 0 ? chout[0] : 0);
+
+  int indeviceno = (nindev  > 0 ? indev [0] : 0);
+  int outdeviceno= (noutdev > 0 ? outdev[0] : 0);
+
+  return pa_open_audio(inchans, outchans, rate, 
+                       soundin, soundout, 
+                       framesperbuf, nbuffers,
+                       indeviceno, outdeviceno, callback);
+}
+
+void audioapi_portaudio (void)
+{
+  t_audioapi*api=audioapi_new_withcallback(gensym("portaudio"),
+                                           pa_open_audio_wcb,
+                                           pa_close_audio,
+                                           pa_send_dacs);
+  if(NULL==api)return;
+  audioapi_addgetdevs(api, pa_getdevs);
+  audioapi_addlistdevs(api, pa_listdevs);
 }
