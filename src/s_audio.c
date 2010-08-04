@@ -228,8 +228,27 @@ void audioapi_getdevs(char *indevlist, int *nindevs, char *outdevlist, int *nout
 }
 
 void audioapi_register(void){
+#ifdef USEAPI_OSS
+  audioapi_oss();
+#endif
+#ifdef USEAPI_MMIO
+  audioapi_mmio();
+#endif
+#ifdef USEAPI_ALSA
   audioapi_alsa();
+#endif
+#ifdef USEAPI_PORTAUDIO
+  audioapi_portaudio();
+#endif
+#ifdef USEAPI_JACK
   audioapi_jack();
+#endif
+#ifdef USEAPI_AUDIOUNIT
+  audioapi_audiounit();
+#endif
+#ifdef USEAPI_ESD
+  audioapi_esd();
+#endif
 }
 
 /* generic audio api handling */
