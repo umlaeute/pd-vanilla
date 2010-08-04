@@ -79,6 +79,7 @@ static void sys_listaudiodevs(void );
 #include "s_media.h"
 struct _audioapi {
   t_symbol*a_name;
+
   t_method a_init;
   t_audiofn_open a_open;
   t_audiofn_open_wcb a_callbackopen;
@@ -267,6 +268,10 @@ void audioapi_getdevs(char *indevlist, int *nindevs, char *outdevlist, int *nout
 
 void audioapi_register(void)
 {
+  static int again=0;
+  if(again)return;
+  again=1;
+
   /* LATER: the functions below should always be available, so we don't need the #ifdefs */
 
 #ifdef USEAPI_OSS
@@ -893,35 +898,41 @@ void sys_get_audio_devs(char *indevlist, int *nindevs,
 
 void sys_set_audio_api(int which)
 {
+  t_audioapi*api=NULL;
      switch(which) {
      case API_ALSA: 
-       setapi(gensym("ALSA")); 
+       api=setapi(gensym("ALSA")); 
        break;
      case API_OSS:
-       setapi(gensym("OSS")); 
+       api=setapi(gensym("OSS")); 
        break;
      case API_MMIO:
-       setapi(gensym("MMIO")); 
+       api=setapi(gensym("MMIO")); 
        break;
      case API_PORTAUDIO:
-       setapi(gensym("portaudio")); 
+       api=setapi(gensym("portaudio")); 
        break;
      case API_JACK:
-       setapi(gensym("jack")); 
+       api=setapi(gensym("jack")); 
        break;
      case API_AUDIOUNIT:
-       setapi(gensym("AudioUnit")); 
+       api=setapi(gensym("AudioUnit")); 
        break;
      case API_ESD:
-       setapi(gensym("ESD")); 
+       api=setapi(gensym("ESD")); 
        break;
 
      case API_NONE: 
      case API_SGI:
+       api=setapi(NULL);
        break;
      }
 
-     sys_audioapi = which;
+     if(api) {
+       sys_audioapi = which;
+     } else {
+       sys_audioapi = API_NONE;
+     }
 
      if (sys_verbose)
         post("sys_audioapi %d", sys_audioapi);
