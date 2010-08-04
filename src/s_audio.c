@@ -73,7 +73,7 @@ static int audio_nextinchans, audio_nextoutchans;
 void sched_audio_callbackfn(void);
 void sched_reopenmeplease(void);
 
-
+static void sys_listaudiodevs(void );
 
 /* generic audio api handling */
 #include "s_media.h"
@@ -104,6 +104,16 @@ static t_audioapi*findapi(t_symbol*s) {
   }
   return NULL;
 }
+static t_audioapi*setapi(t_symbol*s) {
+  t_audioapi*api=findapi(s);
+  audioapi=api;
+
+  if(audioapi) {
+    post("set api to %x: %s", audioapi, audioapi->a_name->s_name);
+  }
+
+  return audioapi;
+}
 
 static t_audioapi*getapi(t_symbol*s) {
   t_audioapi*api=NULL, *last=NULL;
@@ -125,7 +135,7 @@ static t_audioapi*getapi(t_symbol*s) {
 
   return api;
 }
-static void sys_listaudiodevs(void );
+
 t_audioapi*audioapi_new(t_symbol*name,
                         t_audiofn_open openfun, 
                         t_audiofn_close closefun,
@@ -179,10 +189,13 @@ void audioapi_init(void)
 }
 int audioapi_open(int nindev, int *indev, int nchin, int *chin, int noutdev, int *outdev, int nchout, int *chout, int rate)
 {
-  if(audioapi && audioapi->a_open){
-    return audioapi->a_open(nindev, indev, nchin, chin, noutdev, outdev, nchout, chout, rate);
+  if(audioapi) {
+    if(audioapi->a_open){
+      int result=audioapi->a_open(nindev, indev, nchin, chin, noutdev, outdev, nchout, chout, rate);
+      return result;
+    }
   }
-  return 0;
+  return 1;
 }
 int audioapi_callbackopen(int nindev, int *indev, int nchin, int *chin, int noutdev, int *outdev, int nchout, int *chout, int rate, 
                                t_audiocallback callback, 
@@ -228,6 +241,7 @@ void audioapi_getdevs(char *indevlist, int *nindevs, char *outdevlist, int *nout
 }
 
 void audioapi_register(void){
+  post("audioapi register");
 #ifdef USEAPI_OSS
   audioapi_oss();
 #endif
@@ -235,6 +249,7 @@ void audioapi_register(void){
   audioapi_mmio();
 #endif
 #ifdef USEAPI_ALSA
+  post("audioapi register alsa");
   audioapi_alsa();
 #endif
 #ifdef USEAPI_PORTAUDIO
@@ -565,8 +580,8 @@ void sys_reopen_audio( void)
                                     );
     } else {
       outcome=audioapi_open(naudioindev,  audioindev,  naudioindev,  chindev,
-                    naudiooutdev, audiooutdev, naudiooutdev, choutdev, 
-                    rate);
+                            naudiooutdev, audiooutdev, naudiooutdev, choutdev, 
+                            rate);
     }
 
     if (outcome)    /* failed */
@@ -578,6 +593,7 @@ void sys_reopen_audio( void)
     }
     else
     {
+      post("yey!");
                 /* fprintf(stderr, "started w/callback %d\n", callback); */
         audio_state = 1;
         sched_set_using_audio(
@@ -612,8 +628,7 @@ int sys_send_dacs(void)
         sys_outmax = maxsamp;
     }
 
-    audioapi_senddacs();
-    return (0);
+    return audioapi_senddacs();
 }
 
 t_float sys_getsr(void)
@@ -850,7 +865,36 @@ void sys_get_audio_devs(char *indevlist, int *nindevs,
 
 void sys_set_audio_api(int which)
 {
+     switch(which) {
+     case API_ALSA: 
+       setapi(gensym("ALSA")); 
+       break;
+     case API_OSS:
+       setapi(gensym("OSS")); 
+       break;
+     case API_MMIO:
+       setapi(gensym("MMIO")); 
+       break;
+     case API_PORTAUDIO:
+       setapi(gensym("portaudio")); 
+       break;
+     case API_JACK:
+       setapi(gensym("jack")); 
+       break;
+     case API_AUDIOUNIT:
+       setapi(gensym("AudioUnit")); 
+       break;
+     case API_ESD:
+       setapi(gensym("ESD")); 
+       break;
+
+     case API_NONE: 
+     case API_SGI:
+       break;
+     }
+
      sys_audioapi = which;
+
      if (sys_verbose)
         post("sys_audioapi %d", sys_audioapi);
 }
@@ -868,7 +912,7 @@ void glob_audio_setapi(void *dummy, t_floatarg f)
         else
         {
             sys_close_audio();
-            sys_audioapi = newapi;
+            sys_set_audio_api(newapi);
                 /* bash device params back to default */
             audio_naudioindev = audio_naudiooutdev = 1;
             audio_audioindev[0] = audio_audiooutdev[0] = DEFAULTAUDIODEV;
