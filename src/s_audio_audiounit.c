@@ -9,6 +9,7 @@
 #include <string.h>
 #include "m_pd.h"
 #include "s_stuff.h"
+#include "s_media.h"
 #include <AudioToolbox/AudioToolbox.h>
 
 pthread_mutex_t audiounit_mutex;
@@ -39,5 +40,17 @@ void audiounit_listdevs( void)
 {
     post("device listing not implemented for AudioUnit yet\n");
 }
-
 #endif /* AUDIOUNIT */
+
+
+void audioapi_audiounit(void) {
+#ifdef USEAPI_AUDIOUNIT
+  t_audioapi*api=audioapi_new(gensym("AudioUnit"),
+                              audiounit_open_audio,
+                              audiounit_close_audio,
+                              audiounit_send_dacs);
+  if(NULL==api)return;
+  audioapi_addgetdevs(api, audiounit_getdevs);
+  audioapi_addlistdevs(api, audiounit_listdevs);
+#endif /* AudioUnit */
+}
