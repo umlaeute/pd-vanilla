@@ -8,6 +8,9 @@
 #include <string.h>
 #include "m_pd.h"
 #include "s_stuff.h"
+
+#include "s_media.h"
+
 #include <jack/jack.h>
 #include <regex.h>
 
@@ -298,10 +301,9 @@ jack_open_audio(int inchans, int outchans, int rate, t_audiocallback callback)
     int srate;
     jack_status_t status;
 
-    if (NULL==jack_client_new)
-    {
-        fprintf(stderr,"JACK framework not available\n");
-        return 1;
+    if(NULL==jack_client_open) {
+      error("JACK framework not available");
+      return 1;
     }
 
     jack_dio_error = 0;
@@ -541,4 +543,32 @@ void jack_listdevs( void)
     post("device listing not implemented for jack yet\n");
 }
 
+
+int
+jack_open_audio_wcb(int nindev,  int *indev,  int nchin,  int *chin, 
+                    int noutdev, int *outdev, int nchout, int *chout, 
+                    int rate,
+                    t_audiocallback callback, 
+                    t_sample *soundin, t_sample *soundout, int framesperbuf, int nbuffers)
+{
+  int inchans= (nindev  > 0 ? indev[0] : 0);
+  int outchans=(noutdev > 0 ? outdev[0] : 0);
+
+  return jack_open_audio(inchans, outchans, rate, callback);
+}
+
+
 #endif /* JACK */
+
+void audioapi_jack (void)
+{
+#ifdef USEAPI_JACK
+  t_audioapi*api=audioapi_new_withcallback(gensym("jack"),
+                                           jack_open_audio_wcb,
+                                           jack_close_audio,
+                                           jack_send_dacs);
+  if(NULL==api)return;
+  audioapi_addgetdevs(api, jack_getdevs);
+  audioapi_addlistdevs(api, jack_listdevs);
+#endif /* JACK */
+}
