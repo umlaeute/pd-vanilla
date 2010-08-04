@@ -554,7 +554,13 @@ jack_open_audio_wcb(int nindev,  int *indev,  int nchin,  int *chin,
   int inchans= (nindev  > 0 ? indev[0] : 0);
   int outchans=(noutdev > 0 ? outdev[0] : 0);
 
-  return jack_open_audio(inchans, outchans, rate, callback);
+  if(inchans<1)inchans=2;
+  if(outchans<1)outchans=2;
+
+  int result=-1;
+  result=jack_open_audio(inchans, outchans, rate, callback);
+
+  return result;
 }
 
 

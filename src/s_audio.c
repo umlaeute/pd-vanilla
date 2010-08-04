@@ -257,7 +257,6 @@ void audioapi_getdevs(char *indevlist, int *nindevs, char *outdevlist, int *nout
 }
 
 void audioapi_register(void){
-  post("audioapi register");
 #ifdef USEAPI_OSS
   audioapi_oss();
 #endif
