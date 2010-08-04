@@ -8,10 +8,14 @@
 /* support for ALSA pcmv2 api by Karl MacMillan<karlmac@peabody.jhu.edu> */
 /* support for ALSA MMAP noninterleaved by Winfried Ritsch, IEM */
 
-#include <alsa/asoundlib.h>
+
 
 #include "m_pd.h"
 #include "s_stuff.h"
+#include "s_media.h"
+
+#ifdef USEAPI_ALSA
+#include <alsa/asoundlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -881,4 +885,17 @@ void alsa_getdevs(char *indevlist, int *nindevs,
             alsa_names[i]);
     }
     *nindevs = *noutdevs = j;
+}
+
+#endif
+
+void audioapi_alsa(void) {
+#ifdef USEAPI_ALSA
+  t_audioapi*api=audioapi_new(gensym("ALSA"),
+                              alsa_open_audio,
+                              alsa_close_audio,
+                              alsa_send_dacs);
+  if(NULL==api)return;
+  audioapi_addgetdevs(api, alsa_getdevs);
+#endif /* ALSA */
 }

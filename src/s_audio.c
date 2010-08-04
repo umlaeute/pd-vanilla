@@ -228,6 +228,7 @@ void audioapi_getdevs(char *indevlist, int *nindevs, char *outdevlist, int *nout
 }
 
 void audioapi_register(void){
+  audioapi_alsa();
   audioapi_jack();
 }
 
