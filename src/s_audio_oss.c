@@ -13,6 +13,7 @@
 
 #include "m_pd.h"
 #include "s_stuff.h"
+#include "s_media.h"
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -796,4 +797,13 @@ void oss_getdevs(char *indevlist, int *nindevs,
         sprintf(outdevlist + i * devdescsize, "OSS device #%d", i+1);
     }
     *nindevs = *noutdevs = ndev;
+}
+
+void audioapi_oss(void) {
+  t_audioapi*api=audioapi_new(gensym("OSS"),
+                              oss_open_audio,
+                              oss_close_audio,
+                              oss_send_dacs);
+  if(NULL==api)return;
+  audioapi_addgetdevs(api, oss_getdevs);
 }
