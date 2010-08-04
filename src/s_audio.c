@@ -125,7 +125,7 @@ static t_audioapi*getapi(t_symbol*s) {
 
   return api;
 }
-
+static void sys_listaudiodevs(void );
 t_audioapi*audioapi_new(t_symbol*name,
                         t_audiofn_open openfun, 
                         t_audiofn_close closefun,
@@ -137,7 +137,7 @@ t_audioapi*audioapi_new(t_symbol*name,
   api->a_open=openfun;
   api->a_close=closefun;
   api->a_send=sendfun;
-  api->a_listdevs=audioapi_void;
+  api->a_listdevs=sys_listaudiodevs;
 
   return api;
 }
