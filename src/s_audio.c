@@ -81,12 +81,18 @@ struct _audioapi {
   t_symbol*a_name;
 
   t_method a_init;
-  t_audiofn_open a_open;
+  int      a_initted;
+
+  t_audiofn_open     a_open;
   t_audiofn_open_wcb a_callbackopen;
-  t_audiofn_close a_close;
+  t_audiofn_close    a_close;
+
   t_audiofn_send a_send;
+
   t_audiofn_getdevs a_getdevs;
   t_method a_listdevs;
+
+
 
   struct _audioapi*next;
 };
@@ -174,20 +180,29 @@ t_audioapi*audioapi_new_withcallback(t_symbol*name,
 
 void audioapi_addinit(t_audioapi*api, t_method fun) 
 {
-  if(api)api->a_init=fun;
+  if(api)
+    api->a_init=fun;
 }
 void audioapi_addgetdevs(t_audioapi*api, t_audiofn_getdevs fun)
 {
-  if(api)api->a_getdevs=fun;
+  if(api)
+    api->a_getdevs=fun;
 }
 void audioapi_addlistdevs(t_audioapi*api, t_method fun)
 {
-  if(api)api->a_listdevs=fun;
+  if(api)
+    api->a_listdevs=fun;
 }
 
 void audioapi_init(void) 
 {
-  if(audioapi && audioapi->a_init)audioapi->a_init();
+  if(audioapi)
+  { 
+    if(audioapi->a_initted)return;
+    audioapi->a_initted=1;
+    if(audioapi->a_init)
+      audioapi->a_init();
+  }
 }
 int audioapi_open(int nindev, int *indev, int nchin, int *chin, int noutdev, int *outdev, int nchout, int *chout, int rate)
 {
@@ -346,25 +361,12 @@ void sys_save_audio_params(
     audio_blocksize = blocksize;
 }
 
-    /* init routines for any API which needs to set stuff up before
-    any other API gets used.  This is only true of OSS so far. */
-#ifdef USEAPI_OSS
-void oss_init(void);
-#endif
+/* init routines for any API which needs to set stuff up before
+   any other API gets used.  This is only true of OSS so far. */
 
 static void audio_init( void)
 {
-    static int initted = 0;
-    if (initted)
-        return;
-    initted = 1;
-
     audioapi_init();
-
-
-#ifdef USEAPI_OSS
-    oss_init();
-#endif
 } 
 
     /* set channels and sample rate.  */
