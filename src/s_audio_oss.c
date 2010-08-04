@@ -805,5 +805,6 @@ void audioapi_oss(void) {
                               oss_close_audio,
                               oss_send_dacs);
   if(NULL==api)return;
+  audioapi_addinit   (api, oss_init);
   audioapi_addgetdevs(api, oss_getdevs);
 }
