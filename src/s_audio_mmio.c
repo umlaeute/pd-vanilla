@@ -7,6 +7,8 @@
 
 #include "m_pd.h"
 #include "s_stuff.h"
+#include "s_media.h"
+
 #include <stdio.h>
 
 #include <windows.h>
@@ -792,3 +794,16 @@ void mmio_getdevs(char *indevlist, int *nindevs,
         sprintf(outdevlist + i * devdescsize, (wRtn ? "???" : wocap.szPname));
     }
 }
+
+
+void audioapi_mmio(void)
+{
+  t_audioapi*api=audioapi_new(gensym("MMIO"),
+                              mmio_open_audio,
+                              mmio_close_audio,
+                              mmio_send_dacs);
+  if(NULL==api)return;
+  audioapi_addgetdevs(api, mmio_getdevs);
+  //  audioapi_addlistdevs(api, mmio_listdevs);
+}
+
