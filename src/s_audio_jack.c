@@ -551,11 +551,8 @@ jack_open_audio_wcb(int nindev,  int *indev,  int nchin,  int *chin,
                     t_audiocallback callback, 
                     t_sample *soundin, t_sample *soundout, int framesperbuf, int nbuffers)
 {
-  int inchans= (nindev  > 0 ? indev[0] : 0);
-  int outchans=(noutdev > 0 ? outdev[0] : 0);
-
-  if(inchans<1)inchans=2;
-  if(outchans<1)outchans=2;
+  int inchans= (nchin  > 0 ? chin[0] : 0);
+  int outchans=(nchout > 0 ? chout[0] : 0);
 
   int result=-1;
   result=jack_open_audio(inchans, outchans, rate, callback);
