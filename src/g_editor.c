@@ -2427,6 +2427,35 @@ static void canvas_reselect(t_canvas *x)
             gobj_activate(x->gl_editor->e_selection->sel_what, x, 1);
 }
 
+static void canvas_deselectall(t_canvas *x)
+{
+  glist_noselect(x);
+}
+static void canvas_select(t_canvas *x, t_float fwho)
+{
+  int who=fwho;
+  t_gobj *y = 0;
+  if(who<0)return;
+
+  for(y = x->gl_list; who; y=y->g_next)who--;
+
+  if(!glist_isselected(x, y))
+     glist_select(x, y);
+}
+
+static void canvas_deselect(t_canvas *x, t_float fwho)
+{
+  int who=fwho;
+  t_gobj *y = 0;
+  if(who<0)return;
+
+  for(y = x->gl_list; who; y=y->g_next)who--;
+
+  if(glist_isselected(x, y))
+     glist_deselect(x, y);
+}
+
+
 extern t_class *text_class;
 
 void canvas_connect(t_canvas *x, t_floatarg fwhoout, t_floatarg foutno,
@@ -2741,6 +2770,13 @@ void g_editor_setup(void)
 
     class_addmethod(canvas_class, (t_method)canvas_disconnect,
         gensym("disconnect"), A_FLOAT, A_FLOAT, A_FLOAT, A_FLOAT, A_NULL);
+
+    class_addmethod(canvas_class, (t_method)canvas_select,
+        gensym("select"), A_FLOAT, A_NULL);
+    class_addmethod(canvas_class, (t_method)canvas_deselect,
+        gensym("deselect"), A_FLOAT, A_NULL);
+    class_addmethod(canvas_class, (t_method)canvas_deselectall,
+        gensym("deselectall"), A_NULL);
 /* -------------- copy buffer ------------------ */
     copy_binbuf = binbuf_new();
 }
