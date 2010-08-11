@@ -2455,6 +2455,39 @@ static void canvas_deselect(t_canvas *x, t_float fwho)
      glist_deselect(x, y);
 }
 
+static void canvas_delete(t_canvas *x, t_float fwho)
+{
+  int dspstate= canvas_suspend_dsp();
+  t_gobj*obj=NULL;
+  int i=fwho;
+  t_glist*glist=x;
+  if(NULL==glist) {
+    return;
+  }
+  if(i<0) {
+    return;
+  }
+
+  obj=glist->gl_list;
+
+  while(i-- && obj) {
+    obj=obj->g_next;
+  }
+
+  /* this will crash Pd if the object to be deleted is on the stack
+   * workarounds: 
+   *   - check whether we are deleting an object on the stack and refuse
+   * better
+   *   - use a clock to defer deletion till the message stack is safe
+   *   - LATER: mark object for deletion so it won't accept any more message
+   */
+  if(obj) {
+    glist_delete(glist, obj);
+  }
+
+  canvas_resume_dsp(dspstate);
+}
+
 
 extern t_class *text_class;
 
@@ -2770,6 +2803,9 @@ void g_editor_setup(void)
 
     class_addmethod(canvas_class, (t_method)canvas_disconnect,
         gensym("disconnect"), A_FLOAT, A_FLOAT, A_FLOAT, A_FLOAT, A_NULL);
+
+    class_addmethod(canvas_class, (t_method)canvas_delete,
+        gensym("delete"), A_FLOAT, A_NULL);
 
     class_addmethod(canvas_class, (t_method)canvas_select,
         gensym("select"), A_FLOAT, A_NULL);
