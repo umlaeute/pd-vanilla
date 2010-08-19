@@ -898,6 +898,19 @@ void sys_get_audio_devs(char *indevlist, int *nindevs,
                 maxndev, devdescsize);
 }
 
+void sys_setblocksize(int n)
+{
+    if (n < 1)
+        n = 1;
+    if (n != (1 << ilog2(n)))
+        post("warning: adjusting blocksize to power of 2: %d", 
+            (n = (1 << ilog2(n))));
+    sys_blocksize = n;
+}
+
+/* LATER: this should be left only for compatibility reasons
+   instead use `void sys_set_audio_api_name(t_symbol*s) {setapi(s);}'
+*/
 void sys_set_audio_api(int which)
 {
   audioapi_register();
