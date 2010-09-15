@@ -138,6 +138,7 @@ if WINDOWS
 LIBS += -lwsock32 -lwinmm -lole32
 libpd_la_CFLAGS +=  -DUSEAPI_MMIO -DPD_INTERNAL
 libpd_la_SOURCES += s_audio_mmio.c s_midi_mmio.c
+lib_LTLIBRARIES = libpd.la
 bin_SCRIPTS = 
 endif
 
