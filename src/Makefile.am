@@ -1,20 +1,12 @@
 AUTOMAKE_OPTIONS = foreign
 
-# on windows we want the libpd to be installed, else we just do static linkeage
-lib_LTLIBRARIES = 
-noinst_LTLIBRARIES =
-
-if WINDOWS
-lib_LTLIBRARIES += libpd.la
-else
-noinst_LTLIBRARIES += libpd.la
-endif
 
 pd_LDADD = libpd.la
 pd_LDFLAGS = 
 pd_SOURCES = s_entry.c
 nodist_EXTRA_pd_SOURCES = 
 
+noinst_LTLIBRARIES = libpd.la
 libpd_la_CFLAGS = -DPD -DINSTALL_PREFIX=\"$(prefix)\"
 libpd_la_LDFLAGS =
 
@@ -155,6 +147,13 @@ if MINGW
 libpd_la_CFLAGS += -DWISHAPP='"wish85.exe"' -DMSW #kludge, MSW should be _WIN32
 pdsend_CFLAGS += -DMSW #kludge, should use _WIN32
 pdreceive_CFLAGS += -DMSW #kludge, should use _WIN32
+endif
+
+
+if HAVE_LD_OUTPUT_DEF
+pd_LDFLAGS += -Wl,--output-def,pd.def
+defexecdir = $(bindir)
+defexec_DATA = pd.def
 endif
 
 etags: TAGS
