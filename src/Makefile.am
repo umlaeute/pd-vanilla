@@ -138,7 +138,6 @@ if MINGW
 pd_CFLAGS += -DWISHAPP='"wish85.exe"' -DMSW #kludge, MSW should be _WIN32
 pdsend_CFLAGS += -DMSW #kludge, should use _WIN32
 pdreceive_CFLAGS += -DMSW #kludge, should use _WIN32
-bin_PROGRAMS += pd-watchdog
 endif
 
 etags: TAGS
