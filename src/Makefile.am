@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = foreign
 
-noinst_LTLIBRARIES = libpd.la
+EXTRA_LTLIBRARIES = libpd.la
 
 pd_LDADD = libpd.la
 pd_LDFLAGS = 
@@ -45,6 +45,13 @@ noinst_HEADERS = g_all_guis.h s_audio_alsa.h s_audio_pablio.h s_audio_paring.h s
 
 # we want these in the dist tarball
 EXTRA_DIST = CHANGELOG.txt notes.txt makefile.mingw
+
+# on windows we want the libpd to be installed, else we just do static linkeage
+if WINDOWS
+lib_LTLIBRARIES = libpd.la
+else
+noinst_LTLIBRARIES = libpd.la
+endif
 
 # configurations per library
 if ALSA
