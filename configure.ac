@@ -5,6 +5,7 @@ AC_CONFIG_AUX_DIR([m4/config])
 AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIR([m4/generated])
 
+AC_LANG(C)
 AC_CANONICAL_HOST
 
 # you will need to install iPhone XCode on Mac OS X to use this:
