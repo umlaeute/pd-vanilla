@@ -216,7 +216,7 @@ int audioapi_open(int nindev, int *indev, int nchin, int *chin, int noutdev, int
     }
     if(audioapi->a_callbackopen)
     {
-      int blksize = (sys_blocksize ? sys_blocksize : 64);
+      int blksize = (audio_blocksize ? audio_blocksize : 64);
 
       result=audioapi->a_callbackopen(nindev, indev, nchin, chin, noutdev, outdev, nchout, chout, rate,
                                       0, 
@@ -604,7 +604,7 @@ void sys_reopen_audio( void)
 
     if(callback) 
     {
-      int blksize = (sys_blocksize ? sys_blocksize : 64);
+      int blksize = (audio_blocksize ? audio_blocksize : 64);
       outcome=audioapi_callbackopen(naudioindev,  audioindev,  naudioindev,  chindev,
                                     naudiooutdev, audiooutdev, naudiooutdev, choutdev, 
                                     rate,
@@ -896,16 +896,6 @@ void sys_get_audio_devs(char *indevlist, int *nindevs,
                 outdevlist, noutdevs, 
                 canmulti, cancallback, 
                 maxndev, devdescsize);
-}
-
-void sys_setblocksize(int n)
-{
-    if (n < 1)
-        n = 1;
-    if (n != (1 << ilog2(n)))
-        post("warning: adjusting blocksize to power of 2: %d", 
-            (n = (1 << ilog2(n))));
-    sys_blocksize = n;
 }
 
 /* LATER: this should be left only for compatibility reasons

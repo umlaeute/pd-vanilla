@@ -71,7 +71,6 @@ extern t_sample *sys_soundin;
 extern int sys_inchannels;
 extern int sys_outchannels;
 extern int sys_advance_samples; /* scheduler advance in samples */
-extern int sys_blocksize;       /* audio I/O block size in sample frames */
 extern t_float sys_dacsr;
 extern int sys_schedadvance;
 extern int sys_sleepgrain;

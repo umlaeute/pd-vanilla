@@ -245,7 +245,7 @@ int alsamm_open_audio(int rate, int blocksize)
    
   if(sys_verbose)
     post("syschedadvance=%d us(%d Samples)so buffertime max should be this=%d" 
-         "or sys_blocksize=%d (samples) to use buffersize=%d",
+         "or blocksize=%d (samples) to use buffersize=%d",
          sys_schedadvance,sys_advance_samples,alsamm_buffertime,
          blocksize,alsamm_buffersize);
   
