@@ -11,12 +11,20 @@ INCLUDES = @INCLUDES@
 
 SUFFIXES = .@EXTENSION@ .@SHARED_LIB@
 
+pd_LDADD   =
+pd_SOURCES =
+nodist_EXTRA_pd_SOURCES=
+
+# ASIO is C++, so it needs a C++ linker
+if ASIO
+nodist_EXTRA_pd_SOURCES += dummy.cpp
+endif
+
 bin_PROGRAMS = pd pdsend pdreceive
 pdsend_SOURCES = u_pdsend.c
 pdreceive_SOURCES = u_pdreceive.c
 pd_watchdog_SOURCES = s_watchdog.c
-pd_LDADD = 
-pd_SOURCES = g_canvas.c g_graph.c g_text.c g_rtext.c g_array.c g_template.c \
+pd_SOURCES += g_canvas.c g_graph.c g_text.c g_rtext.c g_array.c g_template.c \
 	g_io.c g_scalar.c g_traversal.c g_guiconnect.c g_readwrite.c g_editor.c \
     g_all_guis.c g_bang.c g_hdial.c g_hslider.c g_mycanvas.c g_numbox.c \
     g_toggle.c g_vdial.c g_vslider.c g_vumeter.c \
