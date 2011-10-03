@@ -20,6 +20,12 @@
 #include <unistd.h>
 #endif
 
+#if PD_FLOAT_PRECISION == 32
+#define MY_NUMBOX_FLOAT_SPECIFIER "%.6g"
+#elif PD_FLOAT_PRECISION == 64
+#define MY_NUMBOX_FLOAT_SPECIFIER "%.14lg"
+#endif
+
 /*------------------ global varaibles -------------------------*/
 
 
@@ -76,7 +82,7 @@ void my_numbox_ftoa(t_my_numbox *x)
     double f=x->x_val;
     int bufsize, is_exp=0, i, idecimal;
 
-    sprintf(x->x_buf, "%g", f);
+    sprintf(x->x_buf, MY_NUMBOX_FLOAT_SPECIFIER, f); 
     bufsize = strlen(x->x_buf);
     if(bufsize >= 5)/* if it is in exponential mode */
     {
@@ -455,7 +461,7 @@ static void my_numbox_properties(t_gobj *z, t_glist *owner)
     }
     sprintf(buf, "pdtk_iemgui_dialog %%s |nbx| \
             -------dimensions(digits)(pix):------- %d %d width: %d %d height: \
-            -----------output-range:----------- %g min: %g max: %d \
+            -----------output-range:----------- %g min: %.g max: %d \
             %d lin log %d %d log-height: %d \
             %s %s \
             %s %d %d \

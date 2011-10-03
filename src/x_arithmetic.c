@@ -9,6 +9,29 @@ inputs to int and their outputs back to float. */
 #include "m_pd.h"
 #include <math.h>
 
+#if PD_FLOAT_PRECISION == 32
+#define POW powf
+#define SIN sinf
+#define COS cosf
+#define ATAN atanf
+#define ATAN2 atan2f
+#define SQRT sqrtf
+#define LOG logf
+#define EXP expf
+#define FABS fabsf
+#define MAXLOG 87.3365
+#elif PD_FLOAT_PRECISION == 64
+#define POW pow
+#define SIN sin
+#define COS cos
+#define ATAN atan
+#define ATAN2 atan2
+#define SQRT sqrt
+#define LOG log
+#define EXP exp
+#define FABS fabs
+#define MAXLOG 87.3365
+#endif
 
 typedef struct _binop
 {
@@ -120,14 +143,14 @@ static void *binop1_pow_new(t_floatarg f)
 static void binop1_pow_bang(t_binop *x)
 {
     outlet_float(x->x_obj.ob_outlet,
-        (x->x_f1 > 0 ? powf(x->x_f1, x->x_f2) : 0));
+        (x->x_f1 > 0 ? POW(x->x_f1, x->x_f2) : 0));
 }
 
 static void binop1_pow_float(t_binop *x, t_float f)
 {
     x->x_f1 = f;
     outlet_float(x->x_obj.ob_outlet,
-        (x->x_f1 > 0 ? powf(x->x_f1, x->x_f2) : 0));
+        (x->x_f1 > 0 ? POW(x->x_f1, x->x_f2) : 0));
 }
 
 /* ------------------------ max -------------------------------- */
@@ -510,7 +533,7 @@ static void *sin_new(void)
 
 static void sin_float(t_object *x, t_float f)
 {
-    outlet_float(x->ob_outlet, sinf(f));
+    outlet_float(x->ob_outlet, SIN(f));
 }
 
 static t_class *cos_class;      /* ----------- cos --------------- */
@@ -524,7 +547,7 @@ static void *cos_new(void)
 
 static void cos_float(t_object *x, t_float f)
 {
-    outlet_float(x->ob_outlet, cosf(f));
+    outlet_float(x->ob_outlet, COS(f));
 }
 
 static t_class *tan_class;      /* ----------- tan --------------- */
@@ -539,7 +562,7 @@ static void *tan_new(void)
 static void tan_float(t_object *x, t_float f)
 {
     t_float c = cosf(f);
-    t_float t = (c == 0 ? 0 : sinf(f)/c);
+    t_float t = (c == 0 ? 0 : SIN(f)/c);
     outlet_float(x->ob_outlet, t);
 }
 
@@ -554,7 +577,7 @@ static void *atan_new(void)
 
 static void atan_float(t_object *x, t_float f)
 {
-    outlet_float(x->ob_outlet, atanf(f));
+    outlet_float(x->ob_outlet, ATAN(f));
 }
 
 static t_class *atan2_class;    /* ----------- atan2 --------------- */
@@ -576,7 +599,7 @@ static void *atan2_new(void)
 
 static void atan2_float(t_atan2 *x, t_float f)
 {
-    t_float r = (f == 0 && x->x_f == 0 ? 0 : atan2f(f, x->x_f));
+    t_float r = (f == 0 && x->x_f == 0 ? 0 : ATAN2(f, x->x_f));
     outlet_float(x->x_ob.ob_outlet, r);
 }
 
@@ -591,7 +614,7 @@ static void *sqrt_new(void)
 
 static void sqrt_float(t_object *x, t_float f)
 {
-    t_float r = (f > 0 ? sqrtf(f) : 0);
+    t_float r = (f > 0 ? SQRT(f) : 0);
     outlet_float(x->ob_outlet, r);
 }
 
@@ -606,7 +629,7 @@ static void *log_new(void)
 
 static void log_float(t_object *x, t_float f)
 {
-    t_float r = (f > 0 ? logf(f) : -1000);
+    t_float r = (f > 0 ? LOG(f) : -1000);
     outlet_float(x->ob_outlet, r);
 }
 
@@ -619,7 +642,6 @@ static void *exp_new(void)
     return (x);
 }
 
-#define MAXLOG 87.3365
 static void exp_float(t_object *x, t_float f)
 {
     t_float g;
@@ -627,7 +649,7 @@ static void exp_float(t_object *x, t_float f)
     char buf[10];
 #endif
     if (f > MAXLOG) f = MAXLOG;
-    g = expf(f);
+    g = EXP(f);
     outlet_float(x->ob_outlet, g);
 }
 
@@ -642,7 +664,7 @@ static void *abs_new(void)
 
 static void abs_float(t_object *x, t_float f)
 {
-    outlet_float(x->ob_outlet, fabsf(f));
+    outlet_float(x->ob_outlet, FABS(f));
 }
 
 static t_class *wrap_class;      /* ----------- wrap --------------- */

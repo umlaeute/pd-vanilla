@@ -7,6 +7,12 @@
 #include "m_pd.h"
 #include <string.h>
 
+#if PD_FLOAT_PRECISION == 32
+#define FLOAT_SPECIFIER "%s%s%.6g"
+#elif PD_FLOAT_PRECISION == 64
+#define FLOAT_SPECIFIER "%s%s%.14lg"
+#endif
+
 /* -------------------------- print ------------------------------ */
 static t_class *print_class;
 
@@ -56,7 +62,7 @@ static void print_pointer(t_print *x, t_gpointer *gp)
 
 static void print_float(t_print *x, t_float f)
 {
-    post("%s%s%g", x->x_sym->s_name, (*x->x_sym->s_name ? ": " : ""), f);
+    post(FLOAT_SPECIFIER, x->x_sym->s_name, (*x->x_sym->s_name ? ": " : ""), f);
 }
 
 static void print_list(t_print *x, t_symbol *s, int argc, t_atom *argv)

@@ -13,6 +13,12 @@
 #define ARRAYPAGESIZE 1000  /* this should match the page size in u_main.tk */
 /* } jsarlo */
 
+#if PD_FLOAT_PRECISION == 32
+#define ARRAY_VIEWLIST ".%sArrayWindow.lb insert %d {%d) %g}\n"
+#elif PD_FLOAT_PRECISION == 64
+#define ARRAY_VIEWLIST ".%sArrayWindow.lb insert %d {%d) %.14g}\n"
+#endif
+
 /* see also the "plot" object in g_scalar.c which deals with graphing
 arrays which are fields in scalars.  Someday we should unify the
 two, but how? */
@@ -482,7 +488,7 @@ void garray_arrayviewlist_new(t_garray *x)
     {
         yval = *(t_float *)(a->a_vec +
                elemsize * i + yonset);
-        sys_vgui(".%sArrayWindow.lb insert %d {%d) %g}\n",
+        sys_vgui(ARRAY_VIEWLIST,
                  x->x_realname->s_name,
                  i,
                  i,
@@ -528,7 +534,7 @@ void garray_arrayviewlist_fillpage(t_garray *x,
     {
         yval = *(t_float *)(a->a_vec + \
                elemsize * i + yonset);
-        sys_vgui(".%sArrayWindow.lb insert %d {%d) %g}\n",
+        sys_vgui(ARRAY_VIEWLIST,
                  x->x_realname->s_name,
                  i % ARRAYPAGESIZE,
                  i,

@@ -269,6 +269,7 @@ int sys_main(int argc, char **argv)
     fprintf(stderr, "Pd: COMPILED FOR DEBUGGING\n");
 #endif
     pd_init();                                  /* start the message system */
+    logpost(NULL, 3, "PD_FLOATPRECISION = %lu bits", sizeof(t_float)*8);
     sys_findprogdir(argv[0]);                   /* set sys_progname, guipath */
     for (i = noprefs = 0; i < argc; i++)        /* prescan args for noprefs */
         if (!strcmp(argv[i], "-noprefs"))

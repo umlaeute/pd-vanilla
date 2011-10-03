@@ -6,6 +6,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#if PD_FLOAT_PRECISION == 32
+#define M_ATOM_FLOAT_SPECIFIER "%.6g"
+#elif PD_FLOAT_PRECISION == 64
+#define M_ATOM_FLOAT_SPECIFIER "%.14lg"
+#endif
+
     /* convenience routines for checking and getting values of
         atoms.  There's no "pointer" version since there's nothing
         safe to return if there's an error. */
@@ -76,7 +82,7 @@ void atom_string(t_atom *a, char *buf, unsigned int bufsize)
         strcpy(buf, "(pointer)");
         break;
     case A_FLOAT:
-        sprintf(tbuf, "%g", a->a_w.w_float);
+        sprintf(tbuf, M_ATOM_FLOAT_SPECIFIER, a->a_w.w_float);     
         if (strlen(tbuf) < bufsize-1) strcpy(buf, tbuf);
         else if (a->a_w.w_float < 0) strcpy(buf, "-");
         else  strcpy(buf, "+");
