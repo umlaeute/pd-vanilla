@@ -37,6 +37,7 @@
 #else /* MSP */
 #include "ext.h"
 #include "z_dsp.h"
+typedef float t_float;      // t_float is from m_pd.h
 #endif
 
 #include "fts_to_pd.h"
@@ -107,7 +108,7 @@ struct ex_ex;
 struct ex_ex {
         union {
                 long v_int;
-                float v_flt;
+                t_float v_flt;
                 t_float *v_vec;         /* this is an for allocated vector */
                 long op;
                 char *ptr;
@@ -209,7 +210,7 @@ typedef struct expr {
         t_float *exp_tmpres[MAX_VARS];          /* temporty result for fexpr~ */
         int exp_vsize;                  /* the size of the signal vector */
         int exp_nivec;                  /* # of vector inlets */
-        float exp_f;            /* control value to be transformed to signal */
+        t_float exp_f;            /* control value to be transformed to signal */
 } t_expr;
 
 typedef struct ex_funcs {
