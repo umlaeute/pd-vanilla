@@ -8,7 +8,13 @@ OTHERDATA =
 pd__la_SOURCES = pd~.c
 pdsched_la_SOURCES = pdsched.c
 
-external_LTLIBRARIES = pd~.la pdsched.la
+external_LTLIBRARIES = pdsched.la
+
+if !WINDOWS
+# no pipes nor signals on w32
+external_LTLIBRARIES += pd~.la
+endif
+
 dist_external_DATA = $(PATCHES) $(OTHERDATA)
 
 
