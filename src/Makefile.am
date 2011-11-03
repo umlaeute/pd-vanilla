@@ -6,7 +6,7 @@ pd_LDFLAGS =
 pdsend_CFLAGS = 
 pdreceive_CFLAGS = 
 pd_watchdog_CFLAGS = 
-LIBS = 
+LIBS = @LIBS@
 INCLUDES = @INCLUDES@
 
 SUFFIXES = .@EXTENSION@ .@SHARED_LIB@
