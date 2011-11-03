@@ -375,14 +375,14 @@ int pa_open_audio(int inchans, int outchans, int rate, t_sample *soundin,
     {
         if (pa_inchans)
         {
-            pa_inbuf = malloc(nbuffers*framesperbuf*pa_inchans*sizeof(float));
+            pa_inbuf = (float*)malloc(nbuffers*framesperbuf*pa_inchans*sizeof(float));
             sys_ringbuf_Init(&pa_inring,
                 nbuffers*framesperbuf*pa_inchans*sizeof(float), pa_inbuf,
                     nbuffers*framesperbuf*pa_inchans*sizeof(float));
         }
         if (pa_outchans)
         {
-            pa_outbuf = malloc(nbuffers*framesperbuf*pa_outchans*sizeof(float));
+            pa_outbuf = (float*)malloc(nbuffers*framesperbuf*pa_outchans*sizeof(float));
             sys_ringbuf_Init(&pa_outring,
                 nbuffers*framesperbuf*pa_outchans*sizeof(float), pa_outbuf, 0);
         }

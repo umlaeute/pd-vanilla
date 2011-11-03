@@ -28,7 +28,7 @@ t_binbuf *binbuf_new(void)
 {
     t_binbuf *x = (t_binbuf *)t_getbytes(sizeof(*x));
     x->b_n = 0;
-    x->b_vec = t_getbytes(0);
+    x->b_vec = (t_atom*)t_getbytes(0);
     return (x);
 }
 
@@ -42,14 +42,14 @@ t_binbuf *binbuf_duplicate(t_binbuf *y)
 {
     t_binbuf *x = (t_binbuf *)t_getbytes(sizeof(*x));
     x->b_n = y->b_n;
-    x->b_vec = t_getbytes(x->b_n * sizeof(*x->b_vec));
+    x->b_vec = (t_atom*)t_getbytes(x->b_n * sizeof(*x->b_vec));
     memcpy(x->b_vec, y->b_vec, x->b_n * sizeof(*x->b_vec));
     return (x);
 }
 
 void binbuf_clear(t_binbuf *x)
 {
-    x->b_vec = t_resizebytes(x->b_vec, x->b_n * sizeof(*x->b_vec), 0);
+    x->b_vec = (t_atom*)t_resizebytes(x->b_vec, x->b_n * sizeof(*x->b_vec), 0);
     x->b_n = 0;
 }
 
@@ -61,7 +61,7 @@ void binbuf_text(t_binbuf *x, char *text, size_t size)
     t_atom *ap;
     int nalloc = 16, natom = 0;
     t_freebytes(x->b_vec, x->b_n * sizeof(*x->b_vec));
-    x->b_vec = t_getbytes(nalloc * sizeof(*x->b_vec));
+    x->b_vec = (t_atom*)t_getbytes(nalloc * sizeof(*x->b_vec));
     ap = x->b_vec;
     x->b_n = 0;
     while (1)
@@ -178,7 +178,7 @@ void binbuf_text(t_binbuf *x, char *text, size_t size)
         natom++;
         if (natom == nalloc)
         {
-            x->b_vec = t_resizebytes(x->b_vec, nalloc * sizeof(*x->b_vec),
+            x->b_vec = (t_atom*)t_resizebytes(x->b_vec, nalloc * sizeof(*x->b_vec),
                 nalloc * (2*sizeof(*x->b_vec)));
             nalloc = nalloc * 2;
             ap = x->b_vec + natom;
@@ -186,7 +186,7 @@ void binbuf_text(t_binbuf *x, char *text, size_t size)
         if (textp == etext) break;
     }
     /* reallocate the vector to exactly the right size */
-    x->b_vec = t_resizebytes(x->b_vec, nalloc * sizeof(*x->b_vec),
+    x->b_vec = (t_atom*)t_resizebytes(x->b_vec, nalloc * sizeof(*x->b_vec),
         natom * sizeof(*x->b_vec));
     x->b_n = natom;
 }
@@ -194,7 +194,7 @@ void binbuf_text(t_binbuf *x, char *text, size_t size)
     /* convert a binbuf to text; no null termination. */
 void binbuf_gettext(t_binbuf *x, char **bufp, int *lengthp)
 {
-    char *buf = getbytes(0), *newbuf;
+    char *buf = (char*)getbytes(0), *newbuf;
     int length = 0;
     char string[MAXPDSTRING];
     t_atom *ap;
@@ -207,7 +207,7 @@ void binbuf_gettext(t_binbuf *x, char **bufp, int *lengthp)
                 length && buf[length-1] == ' ') length--;
         atom_string(ap, string, MAXPDSTRING);
         newlength = length + strlen(string) + 1;
-        if (!(newbuf = resizebytes(buf, length, newlength))) break;
+        if (!(newbuf = (char*)resizebytes(buf, length, newlength))) break;
         buf = newbuf;
         strcpy(buf + length, string);
         length = newlength;
@@ -216,7 +216,7 @@ void binbuf_gettext(t_binbuf *x, char **bufp, int *lengthp)
     }
     if (length && buf[length-1] == ' ')
     {
-        if (newbuf = t_resizebytes(buf, length, length-1))
+        if (newbuf = (char*)t_resizebytes(buf, length, length-1))
         {
             buf = newbuf;
             length--;
@@ -233,7 +233,7 @@ void binbuf_add(t_binbuf *x, int argc, t_atom *argv)
 {
     int newsize = x->b_n + argc, i;
     t_atom *ap;
-    if (ap = t_resizebytes(x->b_vec, x->b_n * sizeof(*x->b_vec),
+    if (ap = (t_atom*)t_resizebytes(x->b_vec, x->b_n * sizeof(*x->b_vec),
         newsize * sizeof(*x->b_vec)))
             x->b_vec = ap;
     else
@@ -343,7 +343,7 @@ void binbuf_restore(t_binbuf *x, int argc, t_atom *argv)
 {
     int newsize = x->b_n + argc, i;
     t_atom *ap;
-    if (ap = t_resizebytes(x->b_vec, x->b_n * sizeof(*x->b_vec),
+    if (ap = (t_atom*)t_resizebytes(x->b_vec, x->b_n * sizeof(*x->b_vec),
         newsize * sizeof(*x->b_vec)))
             x->b_vec = ap;
     else
@@ -776,7 +776,7 @@ int binbuf_read(t_binbuf *b, char *filename, char *dirname, int crflag)
         return (1);
     }
     if ((length = lseek(fd, 0, SEEK_END)) < 0 || lseek(fd, 0, SEEK_SET) < 0 
-        || !(buf = t_getbytes(length)))
+        || !(buf = (char*)t_getbytes(length)))
     {
         fprintf(stderr, "lseek: ");
         perror(namebuf);

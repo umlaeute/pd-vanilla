@@ -194,7 +194,7 @@ static void alist_clone(t_alist *x, t_alist *y)
 static void alist_setup(void)
 {
     alist_class = class_new(gensym("list inlet"),
-        0, 0, sizeof(t_alist), 0, 0);
+        0, 0, sizeof(t_alist), 0, A_NULL);
     class_addlist(alist_class, alist_list);
     class_addanything(alist_class, alist_anything);
 }
@@ -459,7 +459,7 @@ static void list_trim_setup(void)
 {
     list_trim_class = class_new(gensym("list trim"),
         (t_newmethod)list_trim_new, 0,
-        sizeof(t_list_trim), 0, 0);
+        sizeof(t_list_trim), 0, A_NULL);
     class_addlist(list_trim_class, list_trim_list);
     class_addanything(list_trim_class, list_trim_anything);
     class_sethelpsymbol(list_trim_class, &s_list);
@@ -497,7 +497,7 @@ static void list_length_setup(void)
 {
     list_length_class = class_new(gensym("list length"),
         (t_newmethod)list_length_new, 0,
-        sizeof(t_list_length), 0, 0);
+        sizeof(t_list_length), 0, A_NULL);
     class_addlist(list_length_class, list_length_list);
     class_addanything(list_length_class, list_length_anything);
     class_sethelpsymbol(list_length_class, &s_list);
@@ -508,24 +508,24 @@ static void list_length_setup(void)
 static void *list_new(t_pd *dummy, t_symbol *s, int argc, t_atom *argv)
 {
     if (!argc || argv[0].a_type != A_SYMBOL)
-        newest = list_append_new(s, argc, argv);
+        newest = (t_pd*)list_append_new(s, argc, argv);
     else
     {
         t_symbol *s2 = argv[0].a_w.w_symbol;
         if (s2 == gensym("append"))
-            newest = list_append_new(s, argc-1, argv+1);
+            newest = (t_pd*)list_append_new(s, argc-1, argv+1);
         else if (s2 == gensym("prepend"))
-            newest = list_prepend_new(s, argc-1, argv+1);
+            newest = (t_pd*)list_prepend_new(s, argc-1, argv+1);
          else if (s2 == gensym("split"))
-            newest = list_split_new(atom_getfloatarg(1, argc, argv));
+            newest = (t_pd*)list_split_new(atom_getfloatarg(1, argc, argv));
          else if (s2 == gensym("trim"))
-            newest = list_trim_new();
+            newest = (t_pd*)list_trim_new();
          else if (s2 == gensym("length"))
-            newest = list_length_new();
+            newest = (t_pd*)list_length_new();
         else 
         {
             error("list %s: unknown function", s2->s_name);
-            newest = 0;
+            newest = (t_pd*)0;
         }
     }
     return (newest);
