@@ -186,6 +186,7 @@ gotone:
     filename[MAXPDSTRING-1] = 0;
 
 #ifdef _WIN32
+    if(!makeout)
     {
         char dirname[MAXPDSTRING], *s, *basename;
         sys_bashfilename(filename, filename);
@@ -215,19 +216,23 @@ gotone:
              makeout = (t_xxx)GetProcAddress(ntdll, "setup");
         SetDllDirectory(NULL); /* reset DLL dir to nothing */
     }
-#elif defined HAVE_LIBDL
-    dlobj = dlopen(filename, RTLD_NOW | RTLD_GLOBAL);
-    if (!dlobj)
-    {
-        post("%s: %s", filename, dlerror());
-        class_set_extern_dir(&s_);
-        return (0);
-    }
-    makeout = (t_xxx)dlsym(dlobj,  symname);
+#endif
+#if defined HAVE_LIBDL
     if(!makeout)
-        makeout = (t_xxx)dlsym(dlobj,  "setup");
-#else
-#warning "No dynamic loading mechanism specified, libdl or WIN32 required for loading externals!"
+    {
+        dlobj = dlopen(filename, RTLD_NOW | RTLD_GLOBAL);
+        dlobj = dlopen(filename, RTLD_NOW | RTLD_GLOBAL);
+        if (!dlobj)
+        {
+            post("%s: %s", filename, dlerror());
+            class_set_extern_dir(&s_);
+            return (0);
+        }
+        makeout = (t_xxx)dlsym(dlobj,  symname);
+        /* fprintf(stderr, "symbol %s\n", symname); */
+        if(!makeout)
+            makeout = (t_xxx)dlsym(dlobj,  "setup");
+    }
 #endif
 
     if (!makeout)
