@@ -537,6 +537,8 @@ static t_symbol *addfileextent(t_symbol *s)
 static int tryingalready;
 
 void canvas_popabstraction(t_canvas *x);
+void canvas_initbang(t_canvas *x);
+
 extern t_pd *newest;
 
 t_symbol* pathsearch(t_symbol *s,char* ext);
@@ -577,6 +579,7 @@ void new_anything(void *dummy, t_symbol *s, int argc, t_atom *argv)
             t_pd *was = s__X.s_thing;
             canvas_setargs(argc, argv);
             binbuf_evalfile(gensym(nameptr), gensym(dirbuf));
+            canvas_initbang((t_canvas *)(s__X.s_thing)); /* JMZ*/
             if (s__X.s_thing && was != s__X.s_thing)
                 canvas_popabstraction((t_canvas *)(s__X.s_thing));
             else s__X.s_thing = was;
