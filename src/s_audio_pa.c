@@ -31,6 +31,10 @@
 #endif
 #include "s_audio_paring.h"
 
+#ifdef _MSC_VER  /* This is only for Microsoft's compiler, not cygwin, e.g. */
+#define snprintf sprintf_s
+#endif
+
     /* LATER try to figure out how to handle default devices in portaudio;
     the way s_audio.c handles them isn't going to work here. */
 
@@ -580,14 +584,14 @@ void pa_getdevs(char *indevlist, int *nindevs,
         const PaHostApiInfo *phai = Pa_GetHostApiInfo(pdi->hostApi);
         if (pdi->maxInputChannels > 0 && nin < maxndev)
         {
-            sprintf(indevlist + nin * devdescsize, "(%s)%s",
+            snprintf(indevlist + nin * devdescsize, devdescsize, "(%s)%s",
                 phai->name,pdi->name);
             /* strcpy(indevlist + nin * devdescsize, pdi->name); */
             nin++;
         }
         if (pdi->maxOutputChannels > 0 && nout < maxndev)
         {
-            sprintf(outdevlist + nout * devdescsize, "(%s)%s",
+            snprintf(outdevlist + nout * devdescsize, devdescsize, "(%s)%s",
                 phai->name,pdi->name);
             /* strcpy(outdevlist + nout * devdescsize, pdi->name); */
             nout++;
