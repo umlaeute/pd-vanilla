@@ -41,10 +41,10 @@
     /* public interface declared in m_imp.h */
 
     /* implementation */
-static PaStream *pa_stream;
-static int pa_inchans, pa_outchans;
-static float *pa_soundin, *pa_soundout;
-static t_audiocallback pa_callback;
+static PaStream *pa_stream = NULL;
+static int pa_inchans = 0, pa_outchans = 0;
+static float *pa_soundin = NULL, *pa_soundout = NULL;
+static t_audiocallback pa_callback = NULL;
 
 static float *pa_outbuf;
 static sys_ringbuf pa_outring;
