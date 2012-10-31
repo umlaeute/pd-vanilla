@@ -55,10 +55,19 @@ pthread_cond_t pa_sem;
 /* define this to enable thread signaling instead of polling */
 /* #define THREADSIGNAL */
 
+static unsigned int pa_initialized = 0;
+
+static void pa_deinit(void)
+{
+    if(pa_initialized)
+    {
+        Pa_Terminate();
+        pa_initialized--;
+    }
+}
 static void pa_init(void)
 {
-    static int initialized = 0;
-    if (!initialized)
+    if (!pa_initialized)
     {
 #ifndef _WIN32
         /* Initialize PortAudio  */
@@ -83,7 +92,7 @@ static void pa_init(void)
             fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );
             return;
         }
-        initialized = 1;
+        pa_initialized++;
     }
 }
 
@@ -395,7 +404,7 @@ int pa_open_audio(int inchans, int outchans, int rate, t_sample *soundin,
         fprintf(stderr, "Error number %d opening portaudio stream\n",
             err); 
         fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );
-        Pa_Terminate();
+        pa_deinit();
         return (1);
     }
     else if (sys_verbose)
