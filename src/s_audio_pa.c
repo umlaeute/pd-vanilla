@@ -271,7 +271,7 @@ PaError pa_open_callback(double sampleRate, int inchannels, int outchannels,
         err=Pa_IsFormatSupported(p_instreamparams, p_outstreamparams,
             sampleRate);
         if (paFormatIsSupported != err)
-        goto error;
+            goto error;
     }
 
     err = Pa_OpenStream(
