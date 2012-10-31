@@ -576,18 +576,19 @@ void pa_getdevs(char *indevlist, int *nindevs,
     ndev = Pa_GetDeviceCount();
     for (i = 0; i < ndev; i++)
     {
-        const PaDeviceInfo *pdi = Pa_GetDeviceInfo(i);
+        const PaDeviceInfo   *pdi = Pa_GetDeviceInfo(i);
+        const PaHostApiInfo *phai = Pa_GetHostApiInfo(pdi->hostApi);
         if (pdi->maxInputChannels > 0 && nin < maxndev)
         {
-            sprintf(indevlist + nin * devdescsize, "(%d)%s",
-                pdi->hostApi,pdi->name);
+            sprintf(indevlist + nin * devdescsize, "(%s)%s",
+                phai->name,pdi->name);
             /* strcpy(indevlist + nin * devdescsize, pdi->name); */
             nin++;
         }
         if (pdi->maxOutputChannels > 0 && nout < maxndev)
         {
-            sprintf(outdevlist + nout * devdescsize, "(%d)%s",
-                pdi->hostApi,pdi->name);
+            sprintf(outdevlist + nout * devdescsize, "(%s)%s",
+                phai->name,pdi->name);
             /* strcpy(outdevlist + nout * devdescsize, pdi->name); */
             nout++;
         }
