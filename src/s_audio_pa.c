@@ -57,7 +57,7 @@ pthread_cond_t pa_sem;
 
 static void pa_init(void)
 {
-    static int initialized;
+    static int initialized = 0;
     if (!initialized)
     {
 #ifndef _WIN32
