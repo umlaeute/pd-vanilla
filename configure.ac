@@ -52,8 +52,8 @@ case $host in
 	asio=yes
 	portaudio=yes
 	CFLAGS="$CFLAGS -O6 -funroll-loops -fomit-frame-pointer -DWINVER=0x0501 -D_WIN32_WINNT=0x0501"
-# ASIO is a C++ library, so if its included, then use g++ to build
-	CFLAGS="$CFLAGS -O6 -funroll-loops -fomit-frame-pointer"
+# compat mode for MSVC-binaries using "ms-bitfields"
+	CFLAGS="$CFLAGS -mms-bitfields"
 	EXTERNAL_CFLAGS="-mms-bitfields"
 	EXTERNAL_LDFLAGS="-s -shared -Wl,--enable-auto-import -lpd"
 	EXTERNAL_EXTENSION=dll
