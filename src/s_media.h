@@ -13,7 +13,7 @@
 EXTERN_STRUCT _audioapi;
 #define t_audioapi struct _audioapi
 
-typedef int (*t_audiofn_open)       (int nindev, int *indev, int nchin, int *chin, int noutdev, int *outdev, int nchout, int *chout, int rate);
+typedef int (*t_audiofn_open)       (int nindev, int *indev, int nchin, int *chin, int noutdev, int *outdev, int nchout, int *chout, int rate, int blocksize);
 typedef int (*t_audiofn_open_wcb)   (int nindev, int *indev, int nchin, int *chin, int noutdev, int *outdev, int nchout, int *chout, int rate,
                                       t_audiocallback callback, 
                                       t_sample *soundin, t_sample *soundout, int framesperbuf, int nbuffers);

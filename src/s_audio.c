@@ -209,18 +209,22 @@ int audioapi_open(int nindev, int *indev, int nchin, int *chin, int noutdev, int
   int result=1;
   if(audioapi)
   {
+    int blksize = (audio_blocksize ? audio_blocksize : 64);
+
     if(audioapi->a_open)
     {
-      result=audioapi->a_open(nindev, indev, nchin, chin, noutdev, outdev, nchout, chout, rate);
+      result=audioapi->a_open(nindev, indev, nchin, chin,
+          noutdev, outdev, nchout, chout,
+          rate, blksize);
       return result;
     }
     if(audioapi->a_callbackopen)
     {
-      int blksize = (audio_blocksize ? audio_blocksize : 64);
-
-      result=audioapi->a_callbackopen(nindev, indev, nchin, chin, noutdev, outdev, nchout, chout, rate,
-                                      0, 
-                                      sys_soundin, sys_soundout, blksize, sys_advance_samples/blksize);
+      result=audioapi->a_callbackopen(nindev, indev, nchin, chin,
+          noutdev, outdev, nchout, chout,
+          rate, 0,
+          sys_soundin, sys_soundout,
+          blksize, sys_advance_samples/blksize);
       return result;
     }
 
@@ -241,7 +245,9 @@ int audioapi_callbackopen(int nindev, int *indev, int nchin, int *chin, int nout
     }
     if(audioapi->a_open)
     {
-      return audioapi->a_open(nindev, indev, nchin, chin, noutdev, outdev, nchout, chout, rate);
+      return audioapi->a_open(nindev, indev, nchin, chin,
+          noutdev, outdev, nchout, chout,
+          rate, framesperbuf);
     }
   }
   

@@ -262,8 +262,7 @@ whynot:
 #define O_AUDIOFLAG O_NDELAY
 
 int oss_open_audio(int nindev,  int *indev,  int nchin,  int *chin,
-    int noutdev, int *outdev, int nchout, int *chout, int rate,
-        int blocksize)
+    int noutdev, int *outdev, int nchout, int *chout, int rate, int blocksize)
 {
     int capabilities = 0;
     int inchannels = 0, outchannels = 0;
