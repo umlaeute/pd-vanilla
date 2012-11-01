@@ -231,17 +231,21 @@ int audioapi_open(int nindev, int *indev, int nchin, int *chin, int noutdev, int
   }
   return 1;
 }
-int audioapi_callbackopen(int nindev, int *indev, int nchin, int *chin, int noutdev, int *outdev, int nchout, int *chout, int rate, 
-                               t_audiocallback callback, 
-                               t_sample *soundin, t_sample *soundout, int framesperbuf, int nbuffers)
+int audioapi_callbackopen(int nindev, int *indev, int nchin, int *chin,
+                          int noutdev, int *outdev, int nchout, int *chout,
+                          int rate,
+                          t_audiocallback callback,
+                          t_sample *soundin, t_sample *soundout,
+                          int framesperbuf, int nbuffers)
 {
   if(audioapi) 
   {
     if(audioapi->a_callbackopen)
     {
-      return audioapi->a_callbackopen(nindev, indev, nchin, chin, noutdev, outdev, nchout, chout, rate,
-                                      callback, 
-                                      soundin, soundout, framesperbuf, nbuffers);
+      return audioapi->a_callbackopen(nindev, indev, nchin, chin,
+          noutdev, outdev, nchout, chout,
+          rate, callback,
+          soundin, soundout, framesperbuf, nbuffers);
     }
     if(audioapi->a_open)
     {
