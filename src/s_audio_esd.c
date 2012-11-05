@@ -27,7 +27,7 @@ static int esd_channels_in;
 
 
 int esd_open_audio(int nindev,  int *indev,  int nchin,  int *chin,
-    int noutdev, int *outdev, int nchout, int *chout, int rate)
+    int noutdev, int *outdev, int nchout, int *chout, int rate, int blocksize)
 { 
 
     esd_format_t format = ESD_BITS16 | ESD_STEREO | ESD_STREAM | ESD_PLAY;

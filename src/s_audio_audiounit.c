@@ -15,7 +15,9 @@
 pthread_mutex_t audiounit_mutex;
 pthread_cond_t audiounit_sem;
 
-int audiounit_open_audio(int inchans, int outchans, int rate)
+int audiounit_open_audio(int naudioindev, int *audioindev, int nchindev,
+    int *chindev, int naudiooutdev, int *audiooutdev, int nchoutdev,
+    int *choutdev, int rate, int blocksize)
 {
     return 0;
 }
