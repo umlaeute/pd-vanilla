@@ -63,6 +63,8 @@ static int xferno = 0;
 static int callno = 0;
 #endif
 
+extern int sys_pcmtimestamp;
+
 /* report an error condition if an error was flagged in the argument "err".
 "fn" is 0 for input, 1 for output, otherwise N/A.  "why" indicates where
 in the code the error was hit. */
@@ -670,6 +672,7 @@ int alsa_send_dacs(void)
                 alsa_checkiosync();   /*  check I/O are in sync */     
         }
     }
+    sys_pcmtimestamp += transfersize;
     return SENDDACS_YES;
 }
 

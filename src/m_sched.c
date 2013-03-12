@@ -215,7 +215,7 @@ static char *(oss_errornames[]) = {
 "A/D/A sync",
 "data late"
 };
-
+extern int sys_pcmtimestamp;
 void glob_audiostatus(void)
 {
     int dev, nresync, nresyncphase, i;

@@ -492,6 +492,11 @@ void sys_reopen_audio( void)
     sys_vgui("set pd_whichapi %d\n",  (outcome == 0 ? sys_audioapi : 0));
 }
 
+/* MINThack: a timestamp to use as external clock
+ *           get's updated in the audio-backend
+ */
+unsigned int sys_pcmtimestamp = 0;
+
 int sys_send_dacs(void)
 {
     if (sys_meters)
