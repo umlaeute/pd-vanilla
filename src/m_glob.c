@@ -76,6 +76,11 @@ static void glob_perf(t_pd *dummy, float f)
     sys_perf = (f != 0);
 }
 
+static void glob_audiostuck(void*dummy)
+{
+  error("audio I/O stuck... closing audio\n");
+}
+
 void max_default(t_pd *x, t_symbol *s, int argc, t_atom *argv)
 {
     int i;
@@ -115,6 +120,8 @@ void glob_init(void)
     class_addmethod(glob_pdobject, (t_method)glob_key, gensym("key"), A_GIMME, 0);
     class_addmethod(glob_pdobject, (t_method)glob_audiostatus,
         gensym("audiostatus"), 0);
+    class_addmethod(glob_pdobject, (t_method)glob_audiostuck,
+        gensym("audiostuck"), 0);
     class_addmethod(glob_pdobject, (t_method)glob_finderror,
         gensym("finderror"), 0);
     class_addmethod(glob_pdobject, (t_method)glob_findinstance,

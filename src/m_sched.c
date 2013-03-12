@@ -405,6 +405,7 @@ int (*sys_idlehook)(void);
 static void m_pollingscheduler( void)
 {
     int idlecount = 0;
+    int audiostuck= 0;
     sys_time_per_dsp_tick = (TIMEUNITPERSEC) *
         ((double)sys_schedblocksize) / sys_dacsr;
 
@@ -461,7 +462,7 @@ static void m_pollingscheduler( void)
                         idletime = sys_getrealtime();
                     else if (sys_getrealtime() - idletime > 1.)
                     {
-                        error("audio I/O stuck... closing audio\n");
+                        audiostuck = 1;
                         sys_close_audio();
                         sched_set_using_audio(SCHED_AUDIO_NONE);
                         goto waitfortick;
@@ -478,6 +479,11 @@ static void m_pollingscheduler( void)
         }
         sys_setmiditimediff(0, 1e-6 * sys_schedadvance);
         sys_addhist(1);
+        if(audiostuck) {
+            t_symbol*pdsym=gensym("pd");
+            if (pdsym->s_thing)
+                typedmess(pdsym->s_thing, gensym("audiostuck"), 0, NULL);
+        }
         if (timeforward != SENDDACS_NO)
             sched_tick(sys_time + sys_time_per_dsp_tick);
         if (timeforward == SENDDACS_YES)
