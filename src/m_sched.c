@@ -405,7 +405,6 @@ int (*sys_idlehook)(void);
 static void m_pollingscheduler( void)
 {
     int idlecount = 0;
-    int audiostuck= 0;
     sys_time_per_dsp_tick = (TIMEUNITPERSEC) *
         ((double)sys_schedblocksize) / sys_dacsr;
 
@@ -425,6 +424,7 @@ static void m_pollingscheduler( void)
     {
         int didsomething = 0;
         int timeforward;
+        int audiostuck= 0;
 
         sys_addhist(0);
     waitfortick:
