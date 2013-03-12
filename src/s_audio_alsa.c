@@ -31,6 +31,9 @@
 #define DEBUG(x) x
 #define DEBUG2(x) {x;}
 
+/* MINT-MASSE hacks (JMZ) */
+#define MINThack 1
+
 /* needed for alsa 0.9 compatibility: */
 #if (SND_LIB_MAJOR < 1)
 #define ALSAAPI9
@@ -616,6 +619,9 @@ int alsa_send_dacs(void)
         }
         if (alsa_indev[iodev].a_sampwidth == 4)
         {
+#ifdef MINThack
+            if(thisdevchans>3)sys_pcmtimestamp=((t_alsa_sample32 *)alsa_snd_buf)[4]; // MINThack: channel#5 encodes a timestamp
+#endif
             for (i = 0; i < chans; i++, ch++, fp1 += DEFDACBLKSIZE)
             {
                 for (j = ch, k = DEFDACBLKSIZE, fp2 = fp1; k--;
@@ -672,7 +678,9 @@ int alsa_send_dacs(void)
                 alsa_checkiosync();   /*  check I/O are in sync */     
         }
     }
+#ifndef MINThack
     sys_pcmtimestamp += transfersize;
+#endif
     return SENDDACS_YES;
 }
 
