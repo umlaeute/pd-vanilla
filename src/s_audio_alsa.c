@@ -621,27 +621,43 @@ int alsa_send_dacs(void)
         {
 #ifdef MINThack
             if(thisdevchans==8){
-              t_alsa_sample32*alsa_snd_buf32=(t_alsa_sample32 *)alsa_snd_buf;
-              int offset=0;
-              /* find the channel with the timestamp-information:
-               * it should be on both channel#4 & #5, so we just look
-               * for 2 consecutive channels with the same value
-               */
-              for  (i = 0; i < chans; i++) {
-                if(alsa_snd_buf32[i] == alsa_snd_buf32[(i+1)%chans])
-                  offset=(chans+i-4)%chans;
-              }
-              sys_pcmtimestamp=((t_alsa_sample32 *)alsa_snd_buf)[(offset+4)%chans]; // MINThack: channel#5 encodes a timestamp
-              for (i = 0; i < chans; i++, ch++, fp1 += DEFDACBLKSIZE)
-              {
-                  for (j = (ch+offset)%chans, k = DEFDACBLKSIZE, fp2 = fp1;
-                       k--;
-                       j += thisdevchans, fp2++)
-                      *fp2 = (float) alsa_snd_buf32[j]
-                          * (1./ INT32_MAX);
-              }
+                static int tsindex=4;
+                t_alsa_sample32*alsa_snd_buf32=(t_alsa_sample32 *)alsa_snd_buf;
+                int offset=0;
+                /* find the channel with the timestamp-information:
+                 * it should be on both channel#4 & #5, so we just look
+                 * for 2 consecutive channels with the same value
+                 */
+
+                /* first check whether the old index is still valid */
+                if((0==alsa_snd_buf32[tsindex]) || (alsa_snd_buf32[tsindex] != alsa_snd_buf32[(tsindex+1)%thisdevchans]))
+                {
+                    /* if not, get a new estimate */
+                    for  (i = 0; i < chans; i++)
+                    {
+                        const t_alsa_sample32 a=alsa_snd_buf32[i];
+                        const t_alsa_sample32 b=alsa_snd_buf32[(i+1)%thisdevchans];
+                        if((a&0xFF) && (a==b))
+                        {
+                            tsindex=i;
+                            break;
+                        }
+                    }
+                }
+                sys_pcmtimestamp=alsa_snd_buf32[tsindex];
+                offset=(thisdevchans+tsindex-4)%thisdevchans;
+
+                for (i = 0; i < chans; i++, ch++, fp1 += DEFDACBLKSIZE)
+                {
+                    int j0=ch;
+                    j0=(ch+offset)%chans;
+                    for (j = j0, k = DEFDACBLKSIZE, fp2 = fp1; k--;
+                         j += thisdevchans, fp2++)
+                        *fp2 = (float) alsa_snd_buf32[j]
+                            * (1./ INT32_MAX);
+                }
             } else
-#endif
+#endif /* MINThack */
             for (i = 0; i < chans; i++, ch++, fp1 += DEFDACBLKSIZE)
             {
                 for (j = ch, k = DEFDACBLKSIZE, fp2 = fp1; k--;
