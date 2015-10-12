@@ -21,7 +21,7 @@ before_install:
 - sudo apt-get build-dep puredata -qq
 
 before_script:
-  - autoreconf -fiv
+  - ./autogen.sh
   - ./configure --enable-alsa --enable-jack --disable-portaudio
   # implement Coverity Scan with before_script instead of addons.coverity_scan
   # to work around too-early quota check by the coverity_scan addon
