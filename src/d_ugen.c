@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-extern t_class *vinlet_class, *voutlet_class, *canvas_class;
+extern t_class *vinlet_class, *voutlet_class, *canvas_class, *text_class;
 t_float *obj_findsignalscalar(t_object *x, int m);
 static int ugen_loud;
 
@@ -668,8 +668,10 @@ void ugen_connect(t_dspcontext *dc, t_object *x1, int outno, t_object *x2,
     for (u2 = dc->dc_ugenlist; u2 && u2->u_obj != x2; u2 = u2->u_next);
     if (!u1 || !u2 || siginno < 0)
     {
-        pd_error(u1->u_obj,
-            "signal outlet connect to nonsignal inlet (ignored)");
+            /* print an error unless the dest has not been created yet */
+        if (!(x2 && (pd_class(&x2->ob_pd) == text_class)))
+            pd_error(u1->u_obj,
+                "signal outlet connect to nonsignal inlet (ignored)");
         return;
     }
     if (sigoutno < 0 || sigoutno >= u1->u_nout || siginno >= u2->u_nin)
